@@ -11,9 +11,10 @@ const { BufferReader, BufferWriter } = bufferutils
 
 export interface EndorsementJson {
   version: number;
-  trustlevel: number;
+  endorsee: string;
   ratings: Map<string, string>;
 }
+
 export class Endorsement implements SerializableEntity {
 
   static VERSION_INVALID = new BN(0, 10)
@@ -21,19 +22,14 @@ export class Endorsement implements SerializableEntity {
   static VERSION_LAST = new BN(1, 10)
   static VERSION_CURRENT = new BN(1, 10)
 
-  static TRUST_UNKNOWN = new BN(0, 10)                  // unknown and can be included in exploration
-  static TRUST_BLOCKED = new BN(1, 10)                  // suspected or known to be untrustworthy and should not be interacted with
-  static TRUST_APPROVED = new BN(2, 10)                 // explicitly believed to be trustworthy enough to interact with
-  static TRUST_FIRST = new BN(0, 10)
-  static TRUST_LAST = new BN(2, 10)
-
   version: BigNumber;
-  trust_level: BigNumber;
+  endorsee: string;
+
   ratings: Map<string, Buffer>;
 
-  constructor(data: { version?: BigNumber, trust_level?: BigNumber, ratings?: Map<string, Buffer> } = {}) {
+  constructor(data: { version?: BigNumber, endorsee?: string, ratings?: Map<string, Buffer> } = {}) {
     this.version = data.version || new BN(1, 10);
-    this.trust_level = data.trust_level || new BN(0, 10);
+    this.endorsee = data.endorsee || "";
     this.ratings = new Map(data.ratings || []);
   }
 
