@@ -7,7 +7,7 @@ describe('Serializes and deserializes Endorsement', () => {
 
         const endorsementJson = {
             version: 1,
-            endorsee: "monkins1010.vrsctest@",
+            endorsee: "candidate.vrsctest@",
             message: "I endorse X has done Y.",
             reference: "f0e88c0a40e1681634faa6e6b23d5c60b413a4669817df55574a47086dd7e924"
         }
@@ -24,7 +24,7 @@ describe('Serializes and deserializes Endorsement', () => {
 
         const endorsementJson = {
             version: 1,
-            endorsee: "monkins1010.vrsctest@",
+            endorsee: "candidate.vrsctest@",
             message: "I endorse X has done Y.",
             reference: "f0e88c0a40e1681634faa6e6b23d5c60b413a4669817df55574a47086dd7e924"
         }
