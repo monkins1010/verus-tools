@@ -1,18 +1,35 @@
 import { Identity } from 'verus-typescript-primitives';
 
 import varuint from 'verus-typescript-primitives/dist/utils/varuint'
+import varint from 'verus-typescript-primitives/dist/utils/varint'
 import { fromBase58Check, toBase58Check } from "verus-typescript-primitives/dist/utils/address";
 import bufferutils from 'verus-typescript-primitives/dist/utils/bufferutils'
 import { BN } from 'bn.js';
 import { BigNumber } from 'verus-typescript-primitives/dist/utils/types/BigNumber';
 import { I_ADDR_VERSION } from 'verus-typescript-primitives/dist/constants/vdxf';
 import { SerializableEntity } from 'verus-typescript-primitives/dist/utils/types/SerializableEntity';
+import { VdxfUniValue } from 'verus-typescript-primitives' 
 const { BufferReader, BufferWriter } = bufferutils
+
+export const ENDORSEMENT_EMPLOYMENT_PERSONAL = {
+  "vdxfid": "iD1JEZLLWPvrepAtngcrweeDeypeBSCjdw",
+  "indexid": "xHqQhMmRMi9XGz3veNH1v3Akgdqf6kAhJb",
+  "hash160result": "1a18d9f343f293d8c9569c12ccd82b6e5d028b68",
+  "qualifiedname": {
+    "namespace": "iNQFA8jtYe9JYq6Qr49ZxAhvWErFurWjTa",
+    "name": "valu.vrsc::endorsement.employment.personal"
+  }
+}
+
 
 export interface EndorsementJson {
   version: number;
+  flags?: number;
   endorsee: string;
-  ratings: Map<string, string>;
+  message: string;
+  reference: string;
+  metadata?: any;
+
 }
 
 export class Endorsement implements SerializableEntity {
@@ -22,29 +39,41 @@ export class Endorsement implements SerializableEntity {
   static VERSION_LAST = new BN(1, 10)
   static VERSION_CURRENT = new BN(1, 10)
 
+  static FLAGS_HAS_METADATA = new BN(1, 10)
+
+  static ENDORSEMENT_VDXF
+
   version: BigNumber;
+  flags: BigNumber;
   endorsee: string;
+  message: string;
+  reference: Buffer;
+  metaData: VdxfUniValue | null;
 
-  ratings: Map<string, Buffer>;
-
-  constructor(data: { version?: BigNumber, endorsee?: string, ratings?: Map<string, Buffer> } = {}) {
+  constructor(data: { version?: BigNumber, flags?: BigNumber, endorsee?: string, message?: string, reference?: Buffer, metaData?: VdxfUniValue | null } = {}) {
     this.version = data.version || new BN(1, 10);
+    this.flags = data.flags || new BN(0, 10);
     this.endorsee = data.endorsee || "";
-    this.ratings = new Map(data.ratings || []);
+    this.message = data.message || "";
+    this.reference = data.reference || Buffer.alloc(0);
+    this.metaData = data.metaData || null;
   }
 
   getByteLength() {
     let byteLength = 0;
 
-    byteLength += 4; // version uint32
-    byteLength + 1; // trust_level uint8
-    byteLength += varuint.encodingLength(this.ratings.size);
+    byteLength += varint.encodingLength(this.version);
+    byteLength += varint.encodingLength(this.flags);
+    byteLength += varuint.encodingLength(Buffer.from(this.endorsee, 'utf-8').length);
+    byteLength += Buffer.from(this.endorsee, 'utf-8').length;
+    byteLength += varuint.encodingLength(Buffer.from(this.message, 'utf-8').length);
+    byteLength += Buffer.from(this.message, 'utf-8').length;
 
-    for (const [key, value] of this.ratings) {
-      byteLength += 20
-      byteLength += varuint.encodingLength(value.length)
-      byteLength += value.length
+    byteLength += varuint.encodingLength(this.reference.length);
+    byteLength += this.reference.length;
 
+    if (this.metaData) {
+      byteLength += this.metaData.getByteLength();
     }
 
     return byteLength
@@ -53,15 +82,14 @@ export class Endorsement implements SerializableEntity {
   toBuffer() {
     const bufferWriter = new BufferWriter(Buffer.alloc(this.getByteLength()))
 
-    bufferWriter.writeUInt32(this.version.toNumber());
-    bufferWriter.writeUInt8(this.trust_level.toNumber());
-    bufferWriter.writeCompactSize(this.ratings.size);
+    bufferWriter.writeVarInt(this.version);
+    bufferWriter.writeVarInt(this.flags);
+    bufferWriter.writeVarSlice(Buffer.from(this.endorsee, 'utf-8'));
+    bufferWriter.writeVarSlice(Buffer.from(this.message, 'utf-8'));
+    bufferWriter.writeVarSlice(this.reference);
 
-    for (const [key, value] of this.ratings) {
-      const { hash } = fromBase58Check(key);
-
-      bufferWriter.writeSlice(hash);
-      bufferWriter.writeVarSlice(value);
+    if (this.metaData && Endorsement.FLAGS_HAS_METADATA.and(this.flags).gt(new BN(0))) {
+      bufferWriter.writeSlice(this.metaData.toBuffer());
     }
 
     return bufferWriter.buffer
@@ -70,56 +98,72 @@ export class Endorsement implements SerializableEntity {
   fromBuffer(buffer: Buffer, offset: number = 0) {
     const reader = new BufferReader(buffer, offset);
 
-    this.version = new BN(reader.readUInt32());
-    this.trust_level = new BN(reader.readUInt8());
+    this.version = reader.readVarInt();
+    this.flags = reader.readVarInt();
+    this.endorsee = reader.readVarSlice().toString('utf-8');
+    this.message = reader.readVarSlice().toString('utf-8');
+    this.reference = reader.readVarSlice();
 
-    const count = reader.readCompactSize();
-
-    for (let i = 0; i < count; i++) {
-      const hash = reader.readSlice(20)
-      const value = reader.readVarSlice()
-
-      const base58Key = toBase58Check(hash, I_ADDR_VERSION)
-
-      this.ratings.set(base58Key, value)
+    if(Endorsement.FLAGS_HAS_METADATA.and(this.flags).gt(new BN(0))) {
+      this.metaData = new VdxfUniValue();
+      this.metaData.fromBuffer(reader.readVarSlice());
     }
 
     return reader.offset;
   }
 
-  isValid() {
-    return this.version.gte(Endorsement.VERSION_FIRST) && this.version.lte(Endorsement.VERSION_LAST) &&
-      this.trust_level.gte(Endorsement.TRUST_FIRST) && this.trust_level.lte(Endorsement.TRUST_LAST);
-  }
-  toJson() {
+  toIdentityUpdateJson(type = ENDORSEMENT_EMPLOYMENT_PERSONAL.vdxfid ): {[key: string]: {[key: string]:[string]}} {
 
-    const ratings: { [key: string]: string } = {};
+    const contentmultimap = {};
 
-    this.ratings.forEach((value, key) => {
-      ratings[key] = value.toString('hex');
-    });
+    if (type == ENDORSEMENT_EMPLOYMENT_PERSONAL.vdxfid) {
+
+      contentmultimap[ENDORSEMENT_EMPLOYMENT_PERSONAL.vdxfid] = [{serializedhex: this.toBuffer().toString('hex')}];
+    }
+    else {
+      throw new Error('Unsupported endorsement type')
+    }
 
     return {
-      version: this.version.toString(),
-      trust_level: this.trust_level.toString(),
-      ratings: ratings
+      contentmultimap: contentmultimap
     }
+
+  }
+
+  toJson() {
+
+    let retVal = {
+      version: this.version.toString(),
+      flags: this.flags.toString(),
+      endorsee: this.endorsee,
+      message: this.message,
+      reference: this.reference.toString('hex')
+    }
+
+    if (this.metaData && Endorsement.FLAGS_HAS_METADATA.and(this.flags).gt(new BN(0))) {
+      retVal['metadata'] = this.metaData.toJson();
+    }
+
+    return retVal
+
   }
 
   static fromJson(json: EndorsementJson) {
 
-    const ratings = new Map<string, Buffer>();
+    const flags = new BN(json.flags || 0, 10);
+    let metaData:VdxfUniValue | null = null;
 
-    for (const key in json.ratings) {
-      ratings.set(key, Buffer.from(json.ratings[key], 'hex'));
+    if (json.metadata && Endorsement.FLAGS_HAS_METADATA.and(flags).gt(new BN(0))) {
+      metaData = VdxfUniValue.fromJson(json.metadata);
     }
 
     return new Endorsement({
-      version: new BN(json.version),
-      trust_level: new BN(json.trustlevel),
-      ratings: ratings
+      version: new BN(json.version, 10),
+      flags,
+      endorsee: json.endorsee,
+      message: json.message,
+      reference: Buffer.from(json.reference, 'hex'),
+      metaData
     })
   }
-
-  //TODO: implment ratings values
 }
