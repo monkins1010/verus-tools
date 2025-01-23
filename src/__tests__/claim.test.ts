@@ -7,7 +7,7 @@ describe('Serializes and deserializes Claims', () => {
 
         const claimJson = {
             title: "Developer",
-            organization: "Verus", // should this be an iaddress of the organization?
+            organization: "ACME Widgets", // should this be an iaddress of the organization?
             body: "Body of claim goes here, what you have done, what you have achieved.",
             dates: "2019-2020",
             issued: new Date(Date.now()).toISOString().slice(0,10)
