@@ -24,6 +24,7 @@ class Endorsement {
         this.message = data.message || "";
         this.reference = data.reference || Buffer.alloc(0);
         this.metaData = data.metaData || null;
+        this.signature = data.signature || null;
     }
     getByteLength() {
         let byteLength = 0;
@@ -35,13 +36,27 @@ class Endorsement {
         byteLength += Buffer.from(this.message, 'utf-8').length;
         byteLength += varuint_1.default.encodingLength(this.reference.length);
         byteLength += this.reference.length;
-        if (this.metaData) {
+        if (this.metaData && Endorsement.FLAGS_HAS_METADATA.and(this.flags).gt(new bn_js_1.BN(0))) {
             byteLength += this.metaData.getByteLength();
+        }
+        if (this.signature && Endorsement.FLAGS_HAS_SIGNATURE.and(this.flags).gt(new bn_js_1.BN(0))) {
+            byteLength += this.signature.getByteLength();
         }
         return byteLength;
     }
+    setFlags() {
+        let flags = new bn_js_1.BN(0, 10);
+        if (this.metaData) {
+            flags = flags.or(Endorsement.FLAGS_HAS_METADATA);
+        }
+        if (this.signature && this.signature.isValid()) {
+            flags = flags.or(Endorsement.FLAGS_HAS_SIGNATURE);
+        }
+        this.flags = flags;
+    }
     toBuffer() {
         const bufferWriter = new BufferWriter(Buffer.alloc(this.getByteLength()));
+        this.setFlags();
         bufferWriter.writeVarInt(this.version);
         bufferWriter.writeVarInt(this.flags);
         bufferWriter.writeVarSlice(Buffer.from(this.endorsee, 'utf-8'));
@@ -49,6 +64,9 @@ class Endorsement {
         bufferWriter.writeVarSlice(this.reference);
         if (this.metaData && Endorsement.FLAGS_HAS_METADATA.and(this.flags).gt(new bn_js_1.BN(0))) {
             bufferWriter.writeSlice(this.metaData.toBuffer());
+        }
+        if (this.signature && Endorsement.FLAGS_HAS_SIGNATURE.and(this.flags).gt(new bn_js_1.BN(0))) {
+            bufferWriter.writeSlice(this.signature.toBuffer());
         }
         return bufferWriter.buffer;
     }
@@ -62,6 +80,10 @@ class Endorsement {
         if (Endorsement.FLAGS_HAS_METADATA.and(this.flags).gt(new bn_js_1.BN(0))) {
             this.metaData = new verus_typescript_primitives_1.VdxfUniValue();
             this.metaData.fromBuffer(reader.readVarSlice());
+        }
+        if (Endorsement.FLAGS_HAS_SIGNATURE.and(this.flags).gt(new bn_js_1.BN(0))) {
+            this.signature = new verus_typescript_primitives_1.SignatureData();
+            this.signature.fromBuffer(reader.readVarSlice());
         }
         return reader.offset;
     }
@@ -88,6 +110,9 @@ class Endorsement {
         if (this.metaData && Endorsement.FLAGS_HAS_METADATA.and(this.flags).gt(new bn_js_1.BN(0))) {
             retVal['metadata'] = this.metaData.toJson();
         }
+        if (this.signature && Endorsement.FLAGS_HAS_SIGNATURE.and(this.flags).gt(new bn_js_1.BN(0))) {
+            retVal['signature'] = this.signature.toJson();
+        }
         return retVal;
     }
     static fromJson(json) {
@@ -96,13 +121,18 @@ class Endorsement {
         if (json.metadata && Endorsement.FLAGS_HAS_METADATA.and(flags).gt(new bn_js_1.BN(0))) {
             metaData = verus_typescript_primitives_1.VdxfUniValue.fromJson(json.metadata);
         }
+        let signature = null;
+        if (json.signature && Endorsement.FLAGS_HAS_SIGNATURE.and(flags).gt(new bn_js_1.BN(0))) {
+            signature = verus_typescript_primitives_1.SignatureData.fromJson(json.signature);
+        }
         return new Endorsement({
             version: new bn_js_1.BN(json.version, 10),
             flags,
             endorsee: json.endorsee,
             message: json.message,
             reference: Buffer.from(json.reference, 'hex'),
-            metaData
+            metaData,
+            signature
         });
     }
 }
@@ -112,3 +142,4 @@ Endorsement.VERSION_FIRST = new bn_js_1.BN(1, 10);
 Endorsement.VERSION_LAST = new bn_js_1.BN(1, 10);
 Endorsement.VERSION_CURRENT = new bn_js_1.BN(1, 10);
 Endorsement.FLAGS_HAS_METADATA = new bn_js_1.BN(1, 10);
+Endorsement.FLAGS_HAS_SIGNATURE = new bn_js_1.BN(2, 10);

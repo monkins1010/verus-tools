@@ -1,6 +1,6 @@
-import { BN } from "bn.js";
+
 import { Endorsement, ENDORSEMENT_EMPLOYMENT_PERSONAL } from "../storage/endorsement";
-import exp from "constants";
+
 
 describe('Serializes and deserializes Endorsement', () => {
     test('(de)serialize Endorsement', () => {
