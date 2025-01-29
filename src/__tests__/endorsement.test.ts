@@ -9,7 +9,8 @@ describe('Serializes and deserializes Endorsement', () => {
             version: 1,
             endorsee: "candidate.vrsctest@",
             message: "I endorse X has done Y.",
-            reference: "f0e88c0a40e1681634faa6e6b23d5c60b413a4669817df55574a47086dd7e924"
+            reference: "f0e88c0a40e1681634faa6e6b23d5c60b413a4669817df55574a47086dd7e924", //blockchain txid
+            txref: "493a5f8b457a44beb7ae0c9399192448b6e2576f399aff11c63228481628a8b7" //claim ref inside the txid
         }
         
         const e = Endorsement.fromJson(endorsementJson);

@@ -31,6 +31,7 @@ export interface EndorsementJson {
   reference: string;
   metadata?: any;
   signature?: SignatureJsonDataInterface;
+  index?: string;
 
 }
 
@@ -43,17 +44,19 @@ export class Endorsement implements SerializableEntity {
 
   static FLAGS_HAS_METADATA = new BN(1, 10)
   static FLAGS_HAS_SIGNATURE = new BN(2, 10)
+  static FLAGS_HAS_INDEX = new BN(4, 10)
 
   version: BigNumber;
   flags: BigNumber;
   endorsee: string;
   message: string;
   reference: Buffer;
+  index: Buffer;
   metaData: VdxfUniValue | null;
   signature: SignatureData | null;
 
   constructor(data: { version?: BigNumber, flags?: BigNumber, endorsee?: string, message?: string, reference?: Buffer, metaData?: VdxfUniValue | null,
-                signature?: SignatureData | null } = {}) {
+                signature?: SignatureData | null, index?:Buffer } = {}) {
     this.version = data.version || new BN(1, 10);
     this.flags = data.flags || new BN(0, 10);
     this.endorsee = data.endorsee || "";
@@ -61,6 +64,7 @@ export class Endorsement implements SerializableEntity {
     this.reference = data.reference || Buffer.alloc(0);
     this.metaData = data.metaData || null;
     this.signature = data.signature || null;
+    this.index = data.index || Buffer.alloc(0);
 
   }
 
@@ -85,6 +89,10 @@ export class Endorsement implements SerializableEntity {
       byteLength += this.signature.getByteLength();
     }
 
+    if (this.index && Endorsement.FLAGS_HAS_INDEX.and(this.flags).gt(new BN(0))) {
+      byteLength += this.index.length;
+    }
+
     return byteLength
   }
 
@@ -98,6 +106,10 @@ export class Endorsement implements SerializableEntity {
 
     if (this.signature && this.signature.isValid()) {
       flags = flags.or(Endorsement.FLAGS_HAS_SIGNATURE);
+    }
+
+    if (this.index && this.index.length == 32) {
+      flags = flags.or(Endorsement.FLAGS_HAS_INDEX);
     }
 
     this.flags = flags;
@@ -122,6 +134,10 @@ export class Endorsement implements SerializableEntity {
       bufferWriter.writeSlice(this.signature.toBuffer());
     }
 
+    if (this.index && Endorsement.FLAGS_HAS_INDEX.and(this.flags).gt(new BN(0))) {
+      bufferWriter.writeSlice(this.index);
+    }
+
     return bufferWriter.buffer
   }
 
@@ -142,6 +158,10 @@ export class Endorsement implements SerializableEntity {
     if(Endorsement.FLAGS_HAS_SIGNATURE.and(this.flags).gt(new BN(0))) {
       this.signature = new SignatureData();
       this.signature.fromBuffer(reader.readVarSlice());
+    }
+
+    if(Endorsement.FLAGS_HAS_INDEX.and(this.flags).gt(new BN(0))) {
+      this.index = reader.readSlice(32);
     }
 
     return reader.offset;
@@ -183,6 +203,10 @@ export class Endorsement implements SerializableEntity {
       retVal['signature'] = this.signature.toJson();
     }
 
+    if (this.index && Endorsement.FLAGS_HAS_INDEX.and(this.flags).gt(new BN(0))) {
+      retVal['index'] = this.index.toString('hex');
+    }
+
     return retVal
 
   }
@@ -202,6 +226,12 @@ export class Endorsement implements SerializableEntity {
       signature = SignatureData.fromJson(json.signature);
     }
 
+    let index:Buffer = Buffer.alloc(0);
+
+    if (json.index && Endorsement.FLAGS_HAS_INDEX.and(flags).gt(new BN(0))) {
+      index = Buffer.from(json.index, 'hex');
+    }
+
     return new Endorsement({
       version: new BN(json.version, 10),
       flags,
@@ -209,7 +239,8 @@ export class Endorsement implements SerializableEntity {
       message: json.message,
       reference: Buffer.from(json.reference, 'hex'),
       metaData,
-      signature
+      signature,
+      index
     })
   }
 }

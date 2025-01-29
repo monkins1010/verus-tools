@@ -9,8 +9,9 @@ import { BigNumber } from 'verus-typescript-primitives/dist/utils/types/BigNumbe
 import { I_ADDR_VERSION } from 'verus-typescript-primitives/dist/constants/vdxf';
 import { SerializableEntity } from 'verus-typescript-primitives/dist/utils/types/SerializableEntity';
 import * as VDXF_Data from 'verus-typescript-primitives/dist/vdxf/vdxfdatakeys';
-import { VdxfUniValue, VdxfUniValueJson, DataDescriptor, DataDescriptorJson, VdxfUniType } from 'verus-typescript-primitives'
+import { VdxfUniValue, VdxfUniValueJson, DataDescriptor, DataDescriptorJson, VdxfUniType, DataDescriptorKey } from 'verus-typescript-primitives'
 const { BufferReader, BufferWriter } = bufferutils
+const { randomBytes } = require('crypto');
 
 export const CLAIM_EMPLOYMENT = {
   "vdxfid": "i3bgiLuaxTr6smF8q6xLG4jvvhF1mmrkM2",
@@ -62,6 +63,26 @@ export const CLAIM_SKILL = {
   }
 }
 
+export const CLAIM_EXPERIENCE = {
+  "vdxfid": "iFqtB6XGZmuUKW3Bzongrnum4QAf25Hgfu",
+  "indexid": "xLfzdtxMR688wfvDrVSqqBSJ64BfzAv3s9",
+  "hash160result": "4570c7949267c52bfdedd9d1147d91db148fab87",
+  "qualifiedname": {
+    "namespace": "iNQFA8jtYe9JYq6Qr49ZxAhvWErFurWjTa",
+    "name": "valu.vrsc::claim.experience"
+  }
+}
+
+export const CLAIM = {
+  "vdxfid": "i4d7U1aZhmoxZbWx8AVezh6z1YewAnuw3V",
+  "indexid": "x9TDvp1eZ62dBmPyyr9oy5dX3Cfx6naxiE",
+  "hash160result": "46d2c3d56026b9bf861d2cb4ae735f1bf3dc970c",
+  "qualifiedname": {
+    "namespace": "iNQFA8jtYe9JYq6Qr49ZxAhvWErFurWjTa",
+    "name": "valu.vrsc::claim"
+  }
+}
+
 
 export interface ClaimJson {
   title: string;
@@ -69,6 +90,7 @@ export interface ClaimJson {
   dates?: string;
   issued?: string;
   organization?: string;
+  referenceID?: string;
 }
 
 export type ClaimType = 'experience' | 'achievement' | 'certification' | 'education' | 'employment' | 'skill';
@@ -86,7 +108,7 @@ export class Claim {
     TYPE_SKILL: 'skill'
   } as const;
 
-  constructor(input?: {data?: [VdxfUniValue], type?: ClaimType}) {
+  constructor(input?: { data?: [VdxfUniValue], type?: ClaimType }) {
     this.data = input.data;
     if (this.data == null) {
       this.initialize();
@@ -120,7 +142,7 @@ export class Claim {
 
   createClaimData(data: ClaimJson) {
 
-    if (!this.type ) {
+    if (!this.type) {
       throw new Error('Claim type is required');
     }
 
@@ -180,12 +202,27 @@ export class Claim {
 
       this.appendDataDescriptor(issuedDescriptor);
     }
+
+    let referenceID = data.referenceID || '';
+
+    if (!referenceID || referenceID.length == 0) {
+      referenceID = randomBytes(32).toString('hex');
+    }
+
+    const referenceIDDescriptor = DataDescriptor.fromJson({
+      version: new BN(1),
+      label: 'referenceID',
+      mimetype: 'text/plain',
+      objectdata: { message: referenceID }
+    });
+
+    this.appendDataDescriptor(referenceIDDescriptor);
   }
 
   typeToVdxfid(type: ClaimType): string {
     switch (type) {
       case 'experience':
-        return CLAIM_EMPLOYMENT.vdxfid;
+        return CLAIM_EXPERIENCE.vdxfid;
       case 'achievement':
         return CLAIM_ACHIEVEMENT.vdxfid;
       case 'certification':
@@ -202,16 +239,46 @@ export class Claim {
   }
 
   toIdentityUpdateJson(): { [key: string]: { [key: string]: [string] } } {
-        
+
     const contentmultimap = {}
-    
+
     contentmultimap[this.typeToVdxfid(this.type)] = this.data.map((value) => {
       return value.toJson();
-      
-    }); 
+
+    });
 
     return {
       contentmultimap
     }
   }
+
+  static storeMultipleClaims(claims: Claim[]) {
+    const contentmultimap = {}
+
+    contentmultimap[CLAIM.vdxfid] = [];
+
+    claims.forEach((claim, index) => {
+
+      const objectData = claim.data.reduce((acc, value) => {
+        return Buffer.concat([acc, value.toBuffer()]);
+      }, Buffer.alloc(0)).toString('hex');
+
+      const contentDataDescriptor = {
+        version: 1,
+        flags: 32,
+        label: claim.typeToVdxfid(claim.type),
+        objectdata: {serializedhex: objectData }
+
+      }; 
+
+      contentmultimap[CLAIM.vdxfid].push({[DataDescriptorKey.vdxfid]:contentDataDescriptor});
+
+     
+    });
+
+    return {
+      contentmultimap
+    }
+  }
+
 }
