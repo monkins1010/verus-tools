@@ -9,7 +9,7 @@ import { BigNumber } from 'verus-typescript-primitives/dist/utils/types/BigNumbe
 import { I_ADDR_VERSION } from 'verus-typescript-primitives/dist/constants/vdxf';
 import { SerializableEntity } from 'verus-typescript-primitives/dist/utils/types/SerializableEntity';
 import * as VDXF_Data from 'verus-typescript-primitives/dist/vdxf/vdxfdatakeys';
-import { VdxfUniValue, VdxfUniValueJson, DataDescriptor, DataDescriptorJson, VdxfUniType, DataDescriptorKey } from 'verus-typescript-primitives'
+import { VdxfUniValue, ContentMultiMap, DataDescriptor, KvContent, VdxfUniType, DataDescriptorKey } from 'verus-typescript-primitives'
 const { BufferReader, BufferWriter } = bufferutils
 const { randomBytes } = require('crypto');
 
@@ -212,8 +212,7 @@ export class Claim {
     const referenceIDDescriptor = DataDescriptor.fromJson({
       version: new BN(1),
       label: 'referenceID',
-      mimetype: 'text/plain',
-      objectdata: { message: referenceID }
+      objectdata: { serializedHex: referenceID }
     });
 
     this.appendDataDescriptor(referenceIDDescriptor);
@@ -252,33 +251,33 @@ export class Claim {
     }
   }
 
-  static storeMultipleClaims(claims: Claim[]) {
-    const contentmultimap = {}
+  static storeMultipleClaims(claims: Claim[]):ContentMultiMap {
+    const contentmultimap:KvContent = new Map<string, Array<VdxfUniValue>>();
 
-    contentmultimap[CLAIM.vdxfid] = [];
+    const array = new Array<VdxfUniValue>();
 
     claims.forEach((claim, index) => {
 
       const objectData = claim.data.reduce((acc, value) => {
         return Buffer.concat([acc, value.toBuffer()]);
-      }, Buffer.alloc(0)).toString('hex');
+      }, Buffer.alloc(0));
 
-      const contentDataDescriptor = {
-        version: 1,
-        flags: 32,
+      const contentDataDescriptor = new DataDescriptor({
+        version: new BN(1),
+        flags: new BN(32),
         label: claim.typeToVdxfid(claim.type),
-        objectdata: {serializedhex: objectData }
+        objectdata: objectData 
+      }); 
 
-      }; 
+      array.push(new VdxfUniValue({values: new Map<string, VdxfUniType>([[DataDescriptorKey.vdxfid, contentDataDescriptor]])}));
 
-      contentmultimap[CLAIM.vdxfid].push({[DataDescriptorKey.vdxfid]:contentDataDescriptor});
-
-     
     });
 
-    return {
-      contentmultimap
-    }
+    contentmultimap.set(CLAIM.vdxfid, array);
+
+    const content = new ContentMultiMap({kv_content: contentmultimap});
+
+    return content;
   }
 
 }
