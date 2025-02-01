@@ -125,19 +125,21 @@ export class Claim {
 
     })
 
-    const newMap = new Map<string, VdxfUniType>();
-    newMap.set(VDXF_Data.DataDescriptorKey.vdxfid, descriptor);
+    const newArray = new Array<{[key: string]: VdxfUniType}>;
+    newArray.push({[VDXF_Data.DataDescriptorKey.vdxfid]: descriptor});
 
     this.data = [new VdxfUniValue()];
-    this.data[0].values = newMap;
+    this.data[0].values = newArray;
 
   }
 
   appendDataDescriptor(descriptor: DataDescriptor) {
-    const newMap = new Map<string, VdxfUniType>();
-    newMap.set(VDXF_Data.DataDescriptorKey.vdxfid, descriptor);
+
+    const newArray = new Array<{[key: string]: VdxfUniType}>;
+    newArray.push({[VDXF_Data.DataDescriptorKey.vdxfid]: descriptor});
     this.data.push(new VdxfUniValue());
-    this.data[this.data.length - 1].values = newMap;
+    this.data[this.data.length - 1].values = newArray;
+
   }
 
   createClaimData(data: ClaimJson) {
@@ -269,7 +271,7 @@ export class Claim {
         objectdata: objectData 
       }); 
 
-      array.push(new VdxfUniValue({values: new Map<string, VdxfUniType>([[DataDescriptorKey.vdxfid, contentDataDescriptor]])}));
+      array.push(new VdxfUniValue({values: new Array<{[key:string]: VdxfUniType}>({[DataDescriptorKey.vdxfid]: contentDataDescriptor})}));
 
     });
 

@@ -56,7 +56,7 @@ describe('Serializes and deserializes Claims', () => {
 
         const multiUpdate = Claim.storeMultipleClaims([e1, e2])
         
-        console.log(JSON.stringify(multiUpdate, null, 2))
+        console.log(JSON.stringify(multiUpdate.toJson(), null, 2))
 
         expect(true).toBe(true)
     });
@@ -91,7 +91,7 @@ describe('Serializes and deserializes Claims', () => {
 
         const partial = new PartialIdentity({content_multimap: multiUpdate, name: "testid1", version: new BN(3)})
         
-        console.log(JSON.stringify(partial.content_multimap.toBuffer().toString('hex'), null, 2))
+        console.log(JSON.stringify(partial.content_multimap.toJson(), null, 2))
 
         const checkbuf = new PartialIdentity();
 
