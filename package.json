@@ -22,11 +22,10 @@
   "license": "MIT",
   "dependencies": {
     "@bitgo/utxo-lib": "git+https://github.com/VerusCoin/BitGoJS.git#7c754d4a5920198d9fe6827d3e23bd5cf431f264",
-    "verus-typescript-primitives": "git+https://github.com/monkins1010/verus-typescript-primitives.git#identity-update-request",
     "verusid-ts-client": "git+https://github.com/VerusCoin/verusid-ts-client.git"
   },
   "resolutions": {
-    "verus-typescript-primitives": "git+https://github.com/monkins1010/verus-typescript-primitives.git#identity-update-request"
+    "verus-typescript-primitives": "link:i:/dev2/verus-typescript-primitives"
   },
   "devDependencies": {
     "@types/bn.js": "5.1.1",

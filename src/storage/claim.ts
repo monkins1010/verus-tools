@@ -97,7 +97,7 @@ export type ClaimType = 'experience' | 'achievement' | 'certification' | 'educat
 
 export class Claim {
   type: ClaimType;
-  data: [VdxfUniValue | null];
+  data: Array<VdxfUniValue | null>;
 
   static readonly TYPES = {
     TYPE_EXPERIENCE: 'experience',
@@ -169,6 +169,19 @@ export class Claim {
     });
 
     this.appendDataDescriptor(titleDescriptor);
+
+    if (!data.organization || data.organization.length == 0) {
+      throw new Error('Organization is required');
+    }
+
+    const organizationDescriptor = DataDescriptor.fromJson({
+      version: new BN(1),
+      label: 'organization',
+      mimetype: 'text/plain',
+      objectdata: { message: data.organization }
+    });
+
+    this.appendDataDescriptor(organizationDescriptor);
 
     if (!data.body || data.body.length == 0) {
       throw new Error('Claim body is required');
