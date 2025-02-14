@@ -1,11 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Claim = exports.CLAIM_SKILL = exports.CLAIM_EDUCATION = exports.CLAIM_CERTIFICATION = exports.CLAIM_ACHIEVEMENT = exports.CLAIM_EMPLOYMENT = void 0;
+exports.Claim = exports.CLAIM = exports.CLAIM_EXPERIENCE = exports.CLAIM_SKILL = exports.CLAIM_EDUCATION = exports.CLAIM_CERTIFICATION = exports.CLAIM_ACHIEVEMENT = exports.CLAIM_EMPLOYMENT = void 0;
 const bufferutils_1 = require("verus-typescript-primitives/dist/utils/bufferutils");
 const bn_js_1 = require("bn.js");
 const VDXF_Data = require("verus-typescript-primitives/dist/vdxf/vdxfdatakeys");
 const verus_typescript_primitives_1 = require("verus-typescript-primitives");
 const { BufferReader, BufferWriter } = bufferutils_1.default;
+const { randomBytes } = require('crypto');
 exports.CLAIM_EMPLOYMENT = {
     "vdxfid": "i3bgiLuaxTr6smF8q6xLG4jvvhF1mmrkM2",
     "indexid": "x8RoB9Lfon4mVw8AgncVETGTxMG2jfebR7",
@@ -51,6 +52,24 @@ exports.CLAIM_SKILL = {
         "name": "valu.vrsc::claim.skill"
     }
 };
+exports.CLAIM_EXPERIENCE = {
+    "vdxfid": "iFqtB6XGZmuUKW3Bzongrnum4QAf25Hgfu",
+    "indexid": "xLfzdtxMR688wfvDrVSqqBSJ64BfzAv3s9",
+    "hash160result": "4570c7949267c52bfdedd9d1147d91db148fab87",
+    "qualifiedname": {
+        "namespace": "iNQFA8jtYe9JYq6Qr49ZxAhvWErFurWjTa",
+        "name": "valu.vrsc::claim.experience"
+    }
+};
+exports.CLAIM = {
+    "vdxfid": "i4d7U1aZhmoxZbWx8AVezh6z1YewAnuw3V",
+    "indexid": "x9TDvp1eZ62dBmPyyr9oy5dX3Cfx6naxiE",
+    "hash160result": "46d2c3d56026b9bf861d2cb4ae735f1bf3dc970c",
+    "qualifiedname": {
+        "namespace": "iNQFA8jtYe9JYq6Qr49ZxAhvWErFurWjTa",
+        "name": "valu.vrsc::claim"
+    }
+};
 class Claim {
     constructor(input) {
         this.data = input.data;
@@ -65,16 +84,16 @@ class Claim {
             label: 'version',
             objectdata: '01'
         });
-        const newMap = new Map();
-        newMap.set(VDXF_Data.DataDescriptorKey.vdxfid, descriptor);
+        const newArray = new Array;
+        newArray.push({ [VDXF_Data.DataDescriptorKey.vdxfid]: descriptor });
         this.data = [new verus_typescript_primitives_1.VdxfUniValue()];
-        this.data[0].values = newMap;
+        this.data[0].values = newArray;
     }
     appendDataDescriptor(descriptor) {
-        const newMap = new Map();
-        newMap.set(VDXF_Data.DataDescriptorKey.vdxfid, descriptor);
+        const newArray = new Array;
+        newArray.push({ [VDXF_Data.DataDescriptorKey.vdxfid]: descriptor });
         this.data.push(new verus_typescript_primitives_1.VdxfUniValue());
-        this.data[this.data.length - 1].values = newMap;
+        this.data[this.data.length - 1].values = newArray;
     }
     createClaimData(data) {
         if (!this.type) {
@@ -97,6 +116,16 @@ class Claim {
             objectdata: { message: data.title }
         });
         this.appendDataDescriptor(titleDescriptor);
+        if (!data.organization || data.organization.length == 0) {
+            throw new Error('Organization is required');
+        }
+        const organizationDescriptor = verus_typescript_primitives_1.DataDescriptor.fromJson({
+            version: new bn_js_1.BN(1),
+            label: 'organization',
+            mimetype: 'text/plain',
+            objectdata: { message: data.organization }
+        });
+        this.appendDataDescriptor(organizationDescriptor);
         if (!data.body || data.body.length == 0) {
             throw new Error('Claim body is required');
         }
@@ -125,11 +154,21 @@ class Claim {
             });
             this.appendDataDescriptor(issuedDescriptor);
         }
+        let referenceID = data.referenceID || '';
+        if (!referenceID || referenceID.length == 0) {
+            referenceID = randomBytes(32).toString('hex');
+        }
+        const referenceIDDescriptor = verus_typescript_primitives_1.DataDescriptor.fromJson({
+            version: new bn_js_1.BN(1),
+            label: 'referenceID',
+            objectdata: { serializedhex: referenceID }
+        });
+        this.appendDataDescriptor(referenceIDDescriptor);
     }
     typeToVdxfid(type) {
         switch (type) {
             case 'experience':
-                return exports.CLAIM_EMPLOYMENT.vdxfid;
+                return exports.CLAIM_EXPERIENCE.vdxfid;
             case 'achievement':
                 return exports.CLAIM_ACHIEVEMENT.vdxfid;
             case 'certification':
@@ -152,6 +191,25 @@ class Claim {
         return {
             contentmultimap
         };
+    }
+    static storeMultipleClaims(claims) {
+        const contentmultimap = new Map();
+        const array = new Array();
+        claims.forEach((claim, index) => {
+            const objectData = claim.data.reduce((acc, value) => {
+                return Buffer.concat([acc, value.toBuffer()]);
+            }, Buffer.alloc(0));
+            const contentDataDescriptor = new verus_typescript_primitives_1.DataDescriptor({
+                version: new bn_js_1.BN(1),
+                flags: new bn_js_1.BN(32),
+                label: claim.typeToVdxfid(claim.type),
+                objectdata: objectData
+            });
+            array.push(new verus_typescript_primitives_1.VdxfUniValue({ values: new Array({ [verus_typescript_primitives_1.DataDescriptorKey.vdxfid]: contentDataDescriptor }) }));
+        });
+        contentmultimap.set(exports.CLAIM.vdxfid, array);
+        const content = new verus_typescript_primitives_1.ContentMultiMap({ kv_content: contentmultimap });
+        return content;
     }
 }
 exports.Claim = Claim;

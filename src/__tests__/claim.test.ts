@@ -1,5 +1,4 @@
 import { BN } from "bn.js";
-import { Endorsement, ENDORSEMENT_EMPLOYMENT_PERSONAL } from "../storage/endorsement";
 import { Claim, CLAIM_EMPLOYMENT, ClaimJson } from "../storage/claim";
 import { randomBytes } from "crypto";
 import { ContentMultiMap, DataDescriptor, DataDescriptorJson, PartialIdentity, VdxfUniType, VdxfUniValue, KvContent, DataDescriptorKey } from 'verus-typescript-primitives';
@@ -63,13 +62,13 @@ describe('Serializes and deserializes Claims', () => {
 
         const multiUpdate = Claim.storeMultipleClaims([e1, e2]);
 
-        console.log("contentmultimap update", JSON.stringify(multiUpdate.toJson(), null, 2))
+        //console.log("contentmultimap update", JSON.stringify(multiUpdate.toJson(), null, 2))
 
         const fromBuffer = new PartialIdentity();
 
         fromBuffer.fromBuffer(Buffer.from(serialized, 'hex'));
 
-        console.log("fromBuffer", JSON.stringify(fromBuffer.toJson(), null, 2))
+        //console.log("fromBuffer", JSON.stringify(fromBuffer.toJson(), null, 2))
 
         const partial = new PartialIdentity({ content_multimap: multiUpdate, name: "testid1", version: new BN(3) })
 
@@ -144,9 +143,11 @@ describe('Serializes and deserializes Claims', () => {
         
         const content = new ContentMultiMap({kv_content: contentmultimap});
 
-        console.log("contentmultimap", JSON.stringify(content.toJson(), null, 2))
+        //console.log("contentmultimap", JSON.stringify(content.toJson(), null, 2))
 
-        expect(content.toJson()).toStrictEqual({"sdf":1})
+        const foundKeys = Array.from(content.kv_content.keys());
+
+        expect(foundKeys[0]).toStrictEqual("i3bgiLuaxTr6smF8q6xLG4jvvhF1mmrkM2")
 
     });
 

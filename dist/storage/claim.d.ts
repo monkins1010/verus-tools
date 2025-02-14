@@ -1,4 +1,4 @@
-import { VdxfUniValue, DataDescriptor } from 'verus-typescript-primitives';
+import { VdxfUniValue, ContentMultiMap, DataDescriptor } from 'verus-typescript-primitives';
 export declare const CLAIM_EMPLOYMENT: {
     vdxfid: string;
     indexid: string;
@@ -44,17 +44,36 @@ export declare const CLAIM_SKILL: {
         name: string;
     };
 };
+export declare const CLAIM_EXPERIENCE: {
+    vdxfid: string;
+    indexid: string;
+    hash160result: string;
+    qualifiedname: {
+        namespace: string;
+        name: string;
+    };
+};
+export declare const CLAIM: {
+    vdxfid: string;
+    indexid: string;
+    hash160result: string;
+    qualifiedname: {
+        namespace: string;
+        name: string;
+    };
+};
 export interface ClaimJson {
     title: string;
     body: string;
     dates?: string;
     issued?: string;
     organization?: string;
+    referenceID?: string;
 }
 export declare type ClaimType = 'experience' | 'achievement' | 'certification' | 'education' | 'employment' | 'skill';
 export declare class Claim {
     type: ClaimType;
-    data: [VdxfUniValue | null];
+    data: Array<VdxfUniValue | null>;
     static readonly TYPES: {
         readonly TYPE_EXPERIENCE: "experience";
         readonly TYPE_ACHIEVEMENT: "achievement";
@@ -76,4 +95,5 @@ export declare class Claim {
             [key: string]: [string];
         };
     };
+    static storeMultipleClaims(claims: Claim[]): ContentMultiMap;
 }

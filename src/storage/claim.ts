@@ -227,7 +227,7 @@ export class Claim {
     const referenceIDDescriptor = DataDescriptor.fromJson({
       version: new BN(1),
       label: 'referenceID',
-      objectdata: { serializedHex: referenceID }
+      objectdata: { serializedhex: referenceID }
     });
 
     this.appendDataDescriptor(referenceIDDescriptor);
