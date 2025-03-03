@@ -73,6 +73,46 @@ export const CLAIM_EXPERIENCE = {
   }
 }
 
+export const CLAIM_STATEMENT = {
+  "vdxfid": "i9SktCWXuit2RLSy25K8ijvRKojuXgMJ2o",
+  "indexid": "xEGsLzwcm36h3WKzskyHh8SxMTkvRC6DEd",
+  "hash160result": "d241d5b51f7be94b38d21d2b23d7e1928d267b41",
+  "qualifiedname": {
+    "namespace": "iNQFA8jtYe9JYq6Qr49ZxAhvWErFurWjTa",
+    "name": "valu.vrsc::claim.statement"
+  }
+}
+
+export const CLAIM_SOCIAL_ACCOUNT = {
+  "vdxfid": "i97vLHSG3CnZU1jifqsxxg2p38e5DgPRup",
+  "indexid": "xDx2o5sLtX1E6BckXXY7w4ZM4nf61QrQwe",
+  "hash160result": "221fd3f420cae8074d1e5b1181bef0b1b422eb3d",
+  "qualifiedname": {
+    "namespace": "iNQFA8jtYe9JYq6Qr49ZxAhvWErFurWjTa",
+    "name": "valu.vrsc::claim.socialAccount"
+  }
+}
+
+export const CLAIM_WORK_EXPERIENCE = {
+  "vdxfid": "i6pQWU1Y3Z1addNdnB99ytvBMkbDbwT5Tk",
+  "indexid": "xBeWyGSctsEFFoFfdroJxHSiPQcEUos2RJ",
+  "hash160result": "ccb9b7ac5fa2696e0e31b1a8bb8807279deaaa24",
+  "qualifiedname": {
+    "namespace": "iNQFA8jtYe9JYq6Qr49ZxAhvWErFurWjTa",
+    "name": "valu.vrsc::claim.workExperience"
+  }
+}
+
+export const CLAIM_ATTESTATION_BLOCK = {
+  "vdxfid": "iPfcXMw6afcW7Sjia9dk4hGDsKxEJfU5iz",
+  "indexid": "xUVizANBRyqAjcckRqHu35nktyyFBfhXW1",
+  "hash160result": "857583c7b918f72b4c98c1ef472040e552577bdd",
+  "qualifiedname": {
+    "namespace": "iNQFA8jtYe9JYq6Qr49ZxAhvWErFurWjTa",
+    "name": "valu.vrsc::claim.attestationBlock"
+  }
+}
+
 export const CLAIM = {
   "vdxfid": "i4d7U1aZhmoxZbWx8AVezh6z1YewAnuw3V",
   "indexid": "x9TDvp1eZ62dBmPyyr9oy5dX3Cfx6naxiE",
@@ -85,15 +125,16 @@ export const CLAIM = {
 
 
 export interface ClaimJson {
-  title: string;
-  body: string;
-  dates?: string;
-  issued?: string;
-  organization?: string;
+  // title: string;
+  // body: string;
+  // dates?: string;
+  // issued?: string;
+  // organization?: string;
   referenceID?: string;
 }
 
-export type ClaimType = 'experience' | 'achievement' | 'certification' | 'education' | 'employment' | 'skill';
+export type ClaimType = 'experience' | 'achievement' | 'certification' | 'education' | 'employment' | 'skill' |
+    'statement' | 'socialAccount' | 'workExperience' | 'attestationBlock';
 
 export class Claim {
   type: ClaimType;
@@ -101,10 +142,14 @@ export class Claim {
 
   static readonly TYPES = {
     TYPE_EXPERIENCE: 'experience',
-    TYPE_ACHIEVEMENT: 'achievement',
-    TYPE_CERTIFICATION: 'certification',
-    TYPE_EDUCATION: 'education',
     TYPE_EMPLOYMENT: 'employment',
+    TYPE_CERTIFICATION: 'certification',
+    TYPE_STATEMENT: 'statement',
+    TYPE_SOCIAL_ACCOUNT: 'socialAccount',
+    TYPE_WORK_EXPERIENCE: 'workExperience',
+    TYPE_ATTESTATION_BLOCK: 'attestationBlock',
+    TYPE_ACHIEVEMENT: 'achievement',
+    TYPE_EDUCATION: 'education',
     TYPE_SKILL: 'skill'
   } as const;
 
@@ -122,7 +167,6 @@ export class Claim {
       version: new BN(1),
       label: 'version',
       objectdata: '01'
-
     })
 
     const newArray = new Array<{[key: string]: VdxfUniType}>;
@@ -142,7 +186,7 @@ export class Claim {
 
   }
 
-  createClaimData(data: ClaimJson) {
+  createClaimData(data: Record<string, any>) {
 
     if (!this.type) {
       throw new Error('Claim type is required');
@@ -157,67 +201,6 @@ export class Claim {
 
     this.appendDataDescriptor(typeDescriptor);
 
-    if (!data.title || data.title.length == 0) {
-      throw new Error('Claim title is required');
-    }
-
-    const titleDescriptor = DataDescriptor.fromJson({
-      version: new BN(1),
-      label: 'title',
-      mimetype: 'text/plain',
-      objectdata: { message: data.title }
-    });
-
-    this.appendDataDescriptor(titleDescriptor);
-
-    if (!data.organization || data.organization.length == 0) {
-      throw new Error('Organization is required');
-    }
-
-    const organizationDescriptor = DataDescriptor.fromJson({
-      version: new BN(1),
-      label: 'organization',
-      mimetype: 'text/plain',
-      objectdata: { message: data.organization }
-    });
-
-    this.appendDataDescriptor(organizationDescriptor);
-
-    if (!data.body || data.body.length == 0) {
-      throw new Error('Claim body is required');
-    }
-
-    const bodyDescriptor = DataDescriptor.fromJson({
-      version: new BN(1),
-      label: 'body',
-      mimetype: 'text/plain',
-      objectdata: { message: data.body }
-    });
-
-    this.appendDataDescriptor(bodyDescriptor);
-
-    if (data.dates) {
-      const datesDescriptor = DataDescriptor.fromJson({
-        version: new BN(1),
-        label: 'dates',
-        mimetype: 'text/plain',
-        objectdata: { message: data.dates }
-      });
-
-      this.appendDataDescriptor(datesDescriptor);
-    }
-
-    if (data.issued) {
-      const issuedDescriptor = DataDescriptor.fromJson({
-        version: new BN(1),
-        label: 'issued',
-        mimetype: 'text/plain',
-        objectdata: { message: data.issued }
-      });
-
-      this.appendDataDescriptor(issuedDescriptor);
-    }
-
     let referenceID = data.referenceID || '';
 
     if (!referenceID || referenceID.length == 0) {
@@ -231,6 +214,19 @@ export class Claim {
     });
 
     this.appendDataDescriptor(referenceIDDescriptor);
+
+    Object.keys(data).forEach((key) => {
+      if (key != 'referenceID' && key != 'type') {
+        const newDescriptor = DataDescriptor.fromJson({
+          version: new BN(1),
+          label: key,
+          mimetype: 'text/plain',
+          objectdata: {message: data[key]}
+        });
+
+        this.appendDataDescriptor(newDescriptor);
+      }
+    });
   }
 
   typeToVdxfid(type: ClaimType): string {
@@ -247,6 +243,14 @@ export class Claim {
         return CLAIM_EMPLOYMENT.vdxfid;
       case 'skill':
         return CLAIM_SKILL.vdxfid;
+      case 'statement':
+        return CLAIM_STATEMENT.vdxfid;
+      case 'socialAccount':
+        return CLAIM_SOCIAL_ACCOUNT.vdxfid;
+      case 'workExperience':
+        return CLAIM_WORK_EXPERIENCE.vdxfid;
+      case 'attestationBlock':
+        return CLAIM_ATTESTATION_BLOCK.vdxfid;
       default:
         throw new Error('Unsupported claim type');
     }
