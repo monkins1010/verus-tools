@@ -221,7 +221,7 @@ export class Claim {
           version: new BN(1),
           label: key,
           mimetype: 'text/plain',
-          objectdata: {message: data[key]}
+          objectdata: {message: data[key] || " "}
         });
 
         this.appendDataDescriptor(newDescriptor);
