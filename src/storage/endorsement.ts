@@ -142,6 +142,7 @@ export class Endorsement implements SerializableEntity {
     }
 
     if (this.txid && Endorsement.FLAGS_HAS_TXID.and(this.flags).gt(new BN(0))) {
+      byteLength += varuint.encodingLength(this.txid.length);
       byteLength += this.txid.length;
     }
 
@@ -173,9 +174,9 @@ export class Endorsement implements SerializableEntity {
   }
 
   toBuffer() {
+    this.setFlags();
     const bufferWriter = new BufferWriter(Buffer.alloc(this.getByteLength()))
 
-    this.setFlags();
     bufferWriter.writeVarInt(this.version);
     bufferWriter.writeVarInt(this.flags);
     bufferWriter.writeVarSlice(Buffer.from(this.endorsee, 'utf-8'));
@@ -190,7 +191,7 @@ export class Endorsement implements SerializableEntity {
     }
 
     if (this.signature && Endorsement.FLAGS_HAS_SIGNATURE.and(this.flags).gt(new BN(0))) {
-      bufferWriter.writeSlice(this.signature.toBuffer());
+      bufferWriter.writeVarSlice(this.signature.toBuffer());
     }
 
     if (this.txid && Endorsement.FLAGS_HAS_TXID.and(this.flags).gt(new BN(0))) {
@@ -211,7 +212,6 @@ export class Endorsement implements SerializableEntity {
     if (Endorsement.FLAGS_HAS_MESSAGE.and(this.flags).gt(new BN(0))) {
       this.message = reader.readVarSlice().toString('utf-8');
     }
-    
 
     if (Endorsement.FLAGS_HAS_METADATA.and(this.flags).gt(new BN(0))) {
       this.metaData = new VdxfUniValue();
@@ -311,7 +311,7 @@ export class Endorsement implements SerializableEntity {
 
     let txid: Buffer = Buffer.alloc(0);
 
-    if (json.txid && Endorsement.FLAGS_HAS_TXID.and(flags).gt(new BN(0))) {
+    if (json.txid) {
       txid = Buffer.from(json.txid, 'hex');
     }
 

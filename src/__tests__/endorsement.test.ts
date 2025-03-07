@@ -16,11 +16,10 @@ describe('Serializes and deserializes Endorsement', () => {
             version: 1,
             endorsee: "candidate.vrsctest@",
             reference: "f0e88c0a40e1681634faa6e6b23d5c60b413a4669817df55574a47086dd7e924", //blockchain txid
-            txref: "493a5f8b457a44beb7ae0c9399192448b6e2576f399aff11c63228481628a8b7" //claim ref inside the txid
+            txid: "493a5f8b457a44beb7ae0c9399192448b6e2576f399aff11c63228481628a8b7" //claim ref inside the txid
         }
 
         const e = Endorsement.fromJson(endorsementJson);
-
         const r = e.toBuffer();
         const rFromBuf = new Endorsement;
         rFromBuf.fromBuffer(r);
@@ -33,7 +32,7 @@ describe('Serializes and deserializes Endorsement', () => {
             version: 1,
             endorsee: "candidate.vrsctest@",
             reference: "d425c5dfd8074260a2143e31382a25f3eb82a9eecd21dc63f025bff37cbd3628",
-            txref: "dcf012d856fead4d729b1e5f1b829e23e9198fb288e6c990f1d7ea9fb12c28a7" //claim ref inside the txid
+            txid: "dcf012d856fead4d729b1e5f1b829e23e9198fb288e6c990f1d7ea9fb12c28a7" //claim ref inside the txid
         }
 
         const e = Endorsement.fromJson(endorsementJson);
@@ -92,7 +91,7 @@ describe('Serializes and deserializes Endorsement', () => {
 
         expect(e.toJson()).toStrictEqual({
             "endorsee":"candidate.vrsctest@",
-            "flags":"2",
+            "flags":"6",
             "message":"",
             "reference":"39ff122ee5f3da3a4761db630d6b7bdb081d6a0fcafec126a56b1d59c93a1371",
             "signature":{
@@ -113,6 +112,7 @@ describe('Serializes and deserializes Endorsement', () => {
                ],
                "version":"1"
             },
+            "txid": "7bc1e107a0882ef67c644701762fc8e569bac0bd2405b79aed89cc0a35ee345f",
             "version":"1"
          })
 
