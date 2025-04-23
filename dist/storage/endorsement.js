@@ -86,6 +86,7 @@ class Endorsement {
             byteLength += this.signature.getByteLength();
         }
         if (this.txid && Endorsement.FLAGS_HAS_TXID.and(this.flags).gt(new bn_js_1.BN(0))) {
+            byteLength += varuint_1.default.encodingLength(this.txid.length);
             byteLength += this.txid.length;
         }
         return byteLength;
@@ -107,8 +108,8 @@ class Endorsement {
         this.flags = flags;
     }
     toBuffer() {
-        const bufferWriter = new BufferWriter(Buffer.alloc(this.getByteLength()));
         this.setFlags();
+        const bufferWriter = new BufferWriter(Buffer.alloc(this.getByteLength()));
         bufferWriter.writeVarInt(this.version);
         bufferWriter.writeVarInt(this.flags);
         bufferWriter.writeVarSlice(Buffer.from(this.endorsee, 'utf-8'));
@@ -120,7 +121,7 @@ class Endorsement {
             bufferWriter.writeSlice(this.metaData.toBuffer());
         }
         if (this.signature && Endorsement.FLAGS_HAS_SIGNATURE.and(this.flags).gt(new bn_js_1.BN(0))) {
-            bufferWriter.writeSlice(this.signature.toBuffer());
+            bufferWriter.writeVarSlice(this.signature.toBuffer());
         }
         if (this.txid && Endorsement.FLAGS_HAS_TXID.and(this.flags).gt(new bn_js_1.BN(0))) {
             bufferWriter.writeSlice(this.txid);
@@ -205,7 +206,7 @@ class Endorsement {
             signature = verus_typescript_primitives_1.SignatureData.fromJson(json.signature);
         }
         let txid = Buffer.alloc(0);
-        if (json.txid && Endorsement.FLAGS_HAS_TXID.and(flags).gt(new bn_js_1.BN(0))) {
+        if (json.txid) {
             txid = Buffer.from(json.txid, 'hex');
         }
         return new Endorsement({

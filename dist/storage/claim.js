@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Claim = exports.CLAIM = exports.CLAIM_EXPERIENCE = exports.CLAIM_SKILL = exports.CLAIM_EDUCATION = exports.CLAIM_CERTIFICATION = exports.CLAIM_ACHIEVEMENT = exports.CLAIM_EMPLOYMENT = void 0;
+exports.Claim = exports.CLAIM = exports.CLAIM_ATTESTATION_BLOCK = exports.CLAIM_WORK_EXPERIENCE = exports.CLAIM_SOCIAL_ACCOUNT = exports.CLAIM_STATEMENT = exports.CLAIM_EXPERIENCE = exports.CLAIM_SKILL = exports.CLAIM_EDUCATION = exports.CLAIM_CERTIFICATION = exports.CLAIM_ACHIEVEMENT = exports.CLAIM_EMPLOYMENT = void 0;
 const bufferutils_1 = require("verus-typescript-primitives/dist/utils/bufferutils");
 const bn_js_1 = require("bn.js");
 const VDXF_Data = require("verus-typescript-primitives/dist/vdxf/vdxfdatakeys");
@@ -61,6 +61,42 @@ exports.CLAIM_EXPERIENCE = {
         "name": "valu.vrsc::claim.experience"
     }
 };
+exports.CLAIM_STATEMENT = {
+    "vdxfid": "i9SktCWXuit2RLSy25K8ijvRKojuXgMJ2o",
+    "indexid": "xEGsLzwcm36h3WKzskyHh8SxMTkvRC6DEd",
+    "hash160result": "d241d5b51f7be94b38d21d2b23d7e1928d267b41",
+    "qualifiedname": {
+        "namespace": "iNQFA8jtYe9JYq6Qr49ZxAhvWErFurWjTa",
+        "name": "valu.vrsc::claim.statement"
+    }
+};
+exports.CLAIM_SOCIAL_ACCOUNT = {
+    "vdxfid": "i97vLHSG3CnZU1jifqsxxg2p38e5DgPRup",
+    "indexid": "xDx2o5sLtX1E6BckXXY7w4ZM4nf61QrQwe",
+    "hash160result": "221fd3f420cae8074d1e5b1181bef0b1b422eb3d",
+    "qualifiedname": {
+        "namespace": "iNQFA8jtYe9JYq6Qr49ZxAhvWErFurWjTa",
+        "name": "valu.vrsc::claim.socialAccount"
+    }
+};
+exports.CLAIM_WORK_EXPERIENCE = {
+    "vdxfid": "i6pQWU1Y3Z1addNdnB99ytvBMkbDbwT5Tk",
+    "indexid": "xBeWyGSctsEFFoFfdroJxHSiPQcEUos2RJ",
+    "hash160result": "ccb9b7ac5fa2696e0e31b1a8bb8807279deaaa24",
+    "qualifiedname": {
+        "namespace": "iNQFA8jtYe9JYq6Qr49ZxAhvWErFurWjTa",
+        "name": "valu.vrsc::claim.workExperience"
+    }
+};
+exports.CLAIM_ATTESTATION_BLOCK = {
+    "vdxfid": "iPfcXMw6afcW7Sjia9dk4hGDsKxEJfU5iz",
+    "indexid": "xUVizANBRyqAjcckRqHu35nktyyFBfhXW1",
+    "hash160result": "857583c7b918f72b4c98c1ef472040e552577bdd",
+    "qualifiedname": {
+        "namespace": "iNQFA8jtYe9JYq6Qr49ZxAhvWErFurWjTa",
+        "name": "valu.vrsc::claim.attestationBlock"
+    }
+};
 exports.CLAIM = {
     "vdxfid": "i4d7U1aZhmoxZbWx8AVezh6z1YewAnuw3V",
     "indexid": "x9TDvp1eZ62dBmPyyr9oy5dX3Cfx6naxiE",
@@ -106,54 +142,6 @@ class Claim {
             objectdata: { message: this.type }
         });
         this.appendDataDescriptor(typeDescriptor);
-        if (!data.title || data.title.length == 0) {
-            throw new Error('Claim title is required');
-        }
-        const titleDescriptor = verus_typescript_primitives_1.DataDescriptor.fromJson({
-            version: new bn_js_1.BN(1),
-            label: 'title',
-            mimetype: 'text/plain',
-            objectdata: { message: data.title }
-        });
-        this.appendDataDescriptor(titleDescriptor);
-        if (!data.organization || data.organization.length == 0) {
-            throw new Error('Organization is required');
-        }
-        const organizationDescriptor = verus_typescript_primitives_1.DataDescriptor.fromJson({
-            version: new bn_js_1.BN(1),
-            label: 'organization',
-            mimetype: 'text/plain',
-            objectdata: { message: data.organization }
-        });
-        this.appendDataDescriptor(organizationDescriptor);
-        if (!data.body || data.body.length == 0) {
-            throw new Error('Claim body is required');
-        }
-        const bodyDescriptor = verus_typescript_primitives_1.DataDescriptor.fromJson({
-            version: new bn_js_1.BN(1),
-            label: 'body',
-            mimetype: 'text/plain',
-            objectdata: { message: data.body }
-        });
-        this.appendDataDescriptor(bodyDescriptor);
-        if (data.dates) {
-            const datesDescriptor = verus_typescript_primitives_1.DataDescriptor.fromJson({
-                version: new bn_js_1.BN(1),
-                label: 'dates',
-                mimetype: 'text/plain',
-                objectdata: { message: data.dates }
-            });
-            this.appendDataDescriptor(datesDescriptor);
-        }
-        if (data.issued) {
-            const issuedDescriptor = verus_typescript_primitives_1.DataDescriptor.fromJson({
-                version: new bn_js_1.BN(1),
-                label: 'issued',
-                mimetype: 'text/plain',
-                objectdata: { message: data.issued }
-            });
-            this.appendDataDescriptor(issuedDescriptor);
-        }
         let referenceID = data.referenceID || '';
         if (!referenceID || referenceID.length == 0) {
             referenceID = randomBytes(32).toString('hex');
@@ -164,6 +152,17 @@ class Claim {
             objectdata: { serializedhex: referenceID }
         });
         this.appendDataDescriptor(referenceIDDescriptor);
+        Object.keys(data).forEach((key) => {
+            if (key != 'referenceID' && key != 'type') {
+                const newDescriptor = verus_typescript_primitives_1.DataDescriptor.fromJson({
+                    version: new bn_js_1.BN(1),
+                    label: key,
+                    mimetype: 'text/plain',
+                    objectdata: { message: data[key] || " " }
+                });
+                this.appendDataDescriptor(newDescriptor);
+            }
+        });
     }
     typeToVdxfid(type) {
         switch (type) {
@@ -179,6 +178,14 @@ class Claim {
                 return exports.CLAIM_EMPLOYMENT.vdxfid;
             case 'skill':
                 return exports.CLAIM_SKILL.vdxfid;
+            case 'statement':
+                return exports.CLAIM_STATEMENT.vdxfid;
+            case 'socialAccount':
+                return exports.CLAIM_SOCIAL_ACCOUNT.vdxfid;
+            case 'workExperience':
+                return exports.CLAIM_WORK_EXPERIENCE.vdxfid;
+            case 'attestationBlock':
+                return exports.CLAIM_ATTESTATION_BLOCK.vdxfid;
             default:
                 throw new Error('Unsupported claim type');
         }
@@ -215,9 +222,13 @@ class Claim {
 exports.Claim = Claim;
 Claim.TYPES = {
     TYPE_EXPERIENCE: 'experience',
-    TYPE_ACHIEVEMENT: 'achievement',
-    TYPE_CERTIFICATION: 'certification',
-    TYPE_EDUCATION: 'education',
     TYPE_EMPLOYMENT: 'employment',
+    TYPE_CERTIFICATION: 'certification',
+    TYPE_STATEMENT: 'statement',
+    TYPE_SOCIAL_ACCOUNT: 'socialAccount',
+    TYPE_WORK_EXPERIENCE: 'workExperience',
+    TYPE_ATTESTATION_BLOCK: 'attestationBlock',
+    TYPE_ACHIEVEMENT: 'achievement',
+    TYPE_EDUCATION: 'education',
     TYPE_SKILL: 'skill'
 };
