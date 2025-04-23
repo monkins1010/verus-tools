@@ -40,7 +40,7 @@ describe('Serializes and deserializes Endorsement', () => {
 
         const hash = e.createHash("endorsetest@");
 
-        const signature = await VerusId.signHash("endorsetest@", hash, "Uwh2uGN6RBCSuNpjaiRake1CqDciVZstYBatNAbyz1uB7ivDKiSN");
+        const signature = await VerusId.signMessage("endorsetest@", hash.toString('hex'), "Uwh2uGN6RBCSuNpjaiRake1CqDciVZstYBatNAbyz1uB7ivDKiSN");
 
         const sigInputObj = {
             version: SignatureData.DEFAULT_VERSION,
@@ -56,6 +56,9 @@ describe('Serializes and deserializes Endorsement', () => {
         e.setFlags();
 
         const contentmultimap = e.toIdentityUpdateJson(ENDORSEMENT_SKILL);
+
+        const verifyiedsignature = await VerusId.verifyMessage("endorsetest@", signature, hash.toString('hex'));
+        expect(verifyiedsignature).toBe(true);
 
         expect((Object.keys(contentmultimap.contentmultimap))[0]).toBe(ENDORSEMENT_SKILL.vdxfid)
         expect(contentmultimap.contentmultimap[ENDORSEMENT_SKILL.vdxfid]).toStrictEqual([{ serializedhex: e.toBuffer().toString('hex') }])
@@ -73,7 +76,7 @@ describe('Serializes and deserializes Endorsement', () => {
 
         const hash = e.createHash("endorsetest@");
 
-        const signature = await VerusId.signHash("endorsetest@", hash, "Uwh2uGN6RBCSuNpjaiRake1CqDciVZstYBatNAbyz1uB7ivDKiSN");
+        const signature = await VerusId.signMessage("endorsetest@", hash.toString('hex'), "Uwh2uGN6RBCSuNpjaiRake1CqDciVZstYBatNAbyz1uB7ivDKiSN");
 
         const sigInputObj = {
             version: SignatureData.DEFAULT_VERSION,
@@ -89,6 +92,9 @@ describe('Serializes and deserializes Endorsement', () => {
         e.setFlags();
 
         const offChainObject = { [ENDORSEMENT_SKILL.vdxfid]: [{ serializedhex: e.toBuffer().toString('hex') }] }
+
+        const verifyiedsignature = await VerusId.verifyMessage("endorsetest@", signature, hash.toString('hex'));
+        expect(verifyiedsignature).toBe(true);
 
         expect(e.toJson()).toStrictEqual({
             "endorsee":"candidate.vrsctest@",
