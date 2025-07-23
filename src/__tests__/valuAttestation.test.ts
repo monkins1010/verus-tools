@@ -247,7 +247,7 @@ describe('ValuAttestation Class Tests', () => {
         const attestor = "ValuAttestation@";
         const title = "KYC Verification Attestation";
         
-        const dataDescriptors = attestation.generatePOLAttestation(attestor, title);
+        const dataDescriptors = attestation.generatePOLDataDescriptors(attestor, title);
         
         expect(dataDescriptors).toBeDefined();
         expect(Array.isArray(dataDescriptors)).toBe(true);
@@ -349,9 +349,9 @@ describe('ValuAttestation Class Tests', () => {
     test('throws error for invalid POL attestation parameters', () => {
         const attestation = new ValuAttestation(mockSumSubData);
         
-        expect(() => attestation.generatePOLAttestation("", "title")).toThrow();
-        expect(() => attestation.generatePOLAttestation("attestor", "")).toThrow();
-        expect(() => attestation.generatePOLAttestation("", "")).toThrow();
+        expect(() => attestation.generatePOLDataDescriptors("", "title")).toThrow();
+        expect(() => attestation.generatePOLDataDescriptors("attestor", "")).toThrow();
+        expect(() => attestation.generatePOLDataDescriptors("", "")).toThrow();
     });
 
     test('gets creation and review dates', () => {
