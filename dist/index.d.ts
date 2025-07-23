@@ -1,2 +1,3 @@
-export * from './storage/endorsement';
-export * from './storage/claim';
+export * from './classes/endorsement';
+export * from './classes/claim';
+export * from './formatting/claims/education';

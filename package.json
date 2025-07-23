@@ -26,7 +26,7 @@
     "verusid-ts-client": "git+https://github.com/VerusCoin/verusid-ts-client.git"
   },
   "resolutions": {
-    "verus-typescript-primitives": "link:i:/dev2/verus-typescript-primitives"
+    "verus-typescript-primitives": "https://github.com/monkins1010/verus-typescript-primitives.git#2d395ef294ba56747eee71f9f9c2aa4901847f0e"
   },
   "devDependencies": {
     "@types/bn.js": "5.1.1",

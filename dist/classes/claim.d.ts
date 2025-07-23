@@ -1,4 +1,8 @@
-import { VdxfUniValue, ContentMultiMap, DataDescriptor } from 'verus-typescript-primitives';
+/// <reference types="bn.js" />
+/// <reference types="node" />
+import { BigNumber } from 'verus-typescript-primitives/dist/utils/types/BigNumber';
+import { SerializableEntity } from 'verus-typescript-primitives/dist/utils/types/SerializableEntity';
+import { ContentMultiMap } from 'verus-typescript-primitives';
 export declare const CLAIM_EMPLOYMENT: {
     vdxfid: string;
     indexid: string;
@@ -62,38 +66,42 @@ export declare const CLAIM: {
         name: string;
     };
 };
-export interface ClaimJson {
-    title: string;
-    body: string;
-    dates?: string;
-    issued?: string;
-    organization?: string;
-    referenceID?: string;
-}
+export declare const ATTESTATION_ID: {
+    vdxfid: string;
+};
 export declare type ClaimType = 'experience' | 'achievement' | 'certification' | 'education' | 'employment' | 'skill';
-export declare class Claim {
-    type: ClaimType;
-    data: Array<VdxfUniValue | null>;
+export declare class Claim implements SerializableEntity {
+    static VERSION_INVALID: import("bn.js");
+    static VERSION_FIRST: import("bn.js");
+    static VERSION_LAST: import("bn.js");
+    static VERSION_CURRENT: import("bn.js");
+    version: BigNumber;
+    flags: BigNumber;
+    type: BigNumber;
+    data: any;
     static readonly TYPES: {
-        readonly TYPE_EXPERIENCE: "experience";
-        readonly TYPE_ACHIEVEMENT: "achievement";
-        readonly TYPE_CERTIFICATION: "certification";
-        readonly TYPE_EDUCATION: "education";
-        readonly TYPE_EMPLOYMENT: "employment";
-        readonly TYPE_SKILL: "skill";
+        readonly TYPE_EXPERIENCE: import("bn.js");
+        readonly TYPE_ACHIEVEMENT: import("bn.js");
+        readonly TYPE_CERTIFICATION: import("bn.js");
+        readonly TYPE_EDUCATION: import("bn.js");
+        readonly TYPE_EMPLOYMENT: import("bn.js");
+        readonly TYPE_SKILL: import("bn.js");
     };
     constructor(input?: {
-        data?: [VdxfUniValue];
-        type?: ClaimType;
+        data?: any;
+        type: BigNumber;
+        version?: BigNumber;
+        flags?: BigNumber;
     });
-    initialize(): void;
-    appendDataDescriptor(descriptor: DataDescriptor): void;
-    createClaimData(data: ClaimJson): void;
-    typeToVdxfid(type: ClaimType): string;
+    setData(data: any): void;
+    getByteLength(): number;
+    toBuffer(): Buffer;
+    fromBuffer(buffer: Buffer, offset?: number): number;
     toIdentityUpdateJson(): {
         [key: string]: {
             [key: string]: [string];
         };
     };
-    static storeMultipleClaims(claims: Claim[]): ContentMultiMap;
+    toMMRData(recievingIdentity: String): any[];
+    static storeMultipleClaimsInID(claims: Claim[]): ContentMultiMap;
 }

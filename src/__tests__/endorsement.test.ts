@@ -1,5 +1,5 @@
 
-import { Endorsement, ENDORSEMENT_SKILL } from "../storage/endorsement";
+import { Endorsement, ENDORSEMENT_SKILL } from "../classes/endorsement";
 import { VerusIdInterface, primitives, } from 'verusid-ts-client';
 import { SignDataArgs } from "verus-typescript-primitives/dist/api/classes/SignData/SignDataRequest";
 import { BN } from "bn.js";
@@ -105,11 +105,11 @@ describe('Serializes and deserializes Endorsement', () => {
                "boundhashes":[
                   
                ],
-               "hashtype":"0",
+               "hashtype":0,
                "identityid":"i4M7ar436N7wKHgZodjGAWdsBSNjG7cz8s",
                "signature": signature,
                "signaturehash":"",
-               "signaturetype":"0",
+               "signaturetype":0,
                "systemid":"iJhCezBExJHvtyH3fGhNnt2NhU4Ztkf2yq",
                "vdxfkeynames":[
                   
@@ -117,7 +117,7 @@ describe('Serializes and deserializes Endorsement', () => {
                "vdxfkeys":[
                   
                ],
-               "version":"1"
+               "version":1
             },
             "version":"1"
          })

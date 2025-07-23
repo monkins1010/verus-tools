@@ -3277,17 +3277,16 @@ varuint-bitcoin@1.0.4:
   resolved "https://registry.yarnpkg.com/varuint-bitcoin/-/varuint-bitcoin-1.0.4.tgz#d812c5dae16e32f60544b6adee1d4be1307d0283"
   integrity sha512-2nW4pVicYWxOMY1u+3T3eFXw24wbFlKz+ug7hd02rozYmeFVBoC6LB7/P4E46jN9aD1ezhX01g2Uh4zrZ+9RWw==
 
-"verus-typescript-primitives@git+https://github.com/VerusCoin/verus-typescript-primitives.git":
-  version "0.0.0"
-  uid ""
-
-"verus-typescript-primitives@https://github.com/VerusCoin/verus-typescript-primitives.git":
-  version "0.0.0"
-  uid ""
-
-"verus-typescript-primitives@link:i:/dev2/verus-typescript-primitives":
-  version "0.0.0"
-  uid ""
+"verus-typescript-primitives@git+https://github.com/VerusCoin/verus-typescript-primitives.git", "verus-typescript-primitives@https://github.com/VerusCoin/verus-typescript-primitives.git", "verus-typescript-primitives@https://github.com/monkins1010/verus-typescript-primitives.git#2d395ef294ba56747eee71f9f9c2aa4901847f0e":
+  version "1.0.0"
+  resolved "https://github.com/monkins1010/verus-typescript-primitives.git#2d395ef294ba56747eee71f9f9c2aa4901847f0e"
+  dependencies:
+    base64url "3.0.1"
+    bech32 "2.0.0"
+    blake2b "https://github.com/VerusCoin/blake2b"
+    bn.js "5.2.1"
+    bs58check "2.0.0"
+    create-hash "1.2.0"
 
 "verusd-rpc-ts-client@git+https://github.com/VerusCoin/verusd-rpc-ts-client.git":
   version "0.1.0"
