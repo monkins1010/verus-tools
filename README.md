@@ -16,5 +16,4 @@ Detailed documentation can be found in the `docs/` folder of this repository.
 ### Available Guides
 
 - [Education Claims Guide](docs/education-claims.md) - Complete guide for creating and signing education claims
-
-For the latest documentation, visit: [GitHub Repository](https://github.com/VerusCoin/verus-tools)
+- [ValuAttestation Guide](docs/valu-attestation.md) - Complete guide for creating KYC attestations from SumSub data
