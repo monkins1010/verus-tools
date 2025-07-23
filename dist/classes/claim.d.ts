@@ -57,42 +57,6 @@ export declare const CLAIM_EXPERIENCE: {
         name: string;
     };
 };
-export declare const CLAIM_STATEMENT: {
-    vdxfid: string;
-    indexid: string;
-    hash160result: string;
-    qualifiedname: {
-        namespace: string;
-        name: string;
-    };
-};
-export declare const CLAIM_SOCIAL_ACCOUNT: {
-    vdxfid: string;
-    indexid: string;
-    hash160result: string;
-    qualifiedname: {
-        namespace: string;
-        name: string;
-    };
-};
-export declare const CLAIM_WORK_EXPERIENCE: {
-    vdxfid: string;
-    indexid: string;
-    hash160result: string;
-    qualifiedname: {
-        namespace: string;
-        name: string;
-    };
-};
-export declare const CLAIM_ATTESTATION_BLOCK: {
-    vdxfid: string;
-    indexid: string;
-    hash160result: string;
-    qualifiedname: {
-        namespace: string;
-        name: string;
-    };
-};
 export declare const CLAIM: {
     vdxfid: string;
     indexid: string;
