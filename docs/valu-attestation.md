@@ -190,7 +190,7 @@ const sumSubData = {
       },
     ],
   },
-  email: "monkins@yahoo.com",
+  email: "john123@yahoo.com",
   applicantPlatform: "Web",
   ipCountry: "GBR",
   review: {
