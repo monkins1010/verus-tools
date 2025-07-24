@@ -172,6 +172,8 @@ async function createAndSignEducationClaim() {
             [VDXF_Data.SignatureDataKey.vdxfid]: attestationFromDaemon.signaturedata
         };
 
+        const objectsBuffer = VdxfUniValue.fromJson(vdxfDataObj);
+
         // 6. Create Login request with Education Attestation
         const reply = await VerusId.createLoginConsentRequest(
         VALU_ID,  // valuattestation@
