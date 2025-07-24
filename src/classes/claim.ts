@@ -11,7 +11,9 @@ import { SerializableEntity } from 'verus-typescript-primitives/dist/utils/types
 import * as VDXF_Data from 'verus-typescript-primitives/dist/vdxf/vdxfdatakeys';
 import { VdxfUniValue, ContentMultiMap, DataDescriptor, KvContent, VdxfUniType, DataDescriptorKey } from 'verus-typescript-primitives'
 const { BufferReader, BufferWriter } = bufferutils
-const { randomBytes } = require('crypto');
+
+
+// Keys for Valuverse Claims, users can create their own claim types.
 
 export const CLAIM_EMPLOYMENT = {
   "vdxfid": "i3bgiLuaxTr6smF8q6xLG4jvvhF1mmrkM2",
@@ -83,11 +85,6 @@ export const CLAIM = {
   }
 }
 
-export const ATTESTATION_ID = {
-  "vdxfid": "iAttestationId123456789", // placeholder - replace with actual VDXF key
-}
-
-export type ClaimType = 'experience' | 'achievement' | 'certification' | 'education' | 'employment' | 'skill';
 
 export class Claim implements SerializableEntity {
   static VERSION_INVALID = new BN(0, 10)
@@ -97,19 +94,10 @@ export class Claim implements SerializableEntity {
 
   version: BigNumber;
   flags: BigNumber;
-  type: BigNumber;
+  type: string;
   data: any;
 
-  static readonly TYPES = {
-    TYPE_EXPERIENCE: new BN(0, 10),
-    TYPE_ACHIEVEMENT: new BN(1, 10),
-    TYPE_CERTIFICATION: new BN(2, 10),
-    TYPE_EDUCATION: new BN(3, 10),
-    TYPE_EMPLOYMENT: new BN(4, 10),
-    TYPE_SKILL: new BN(5, 10)
-  } as const;
-
-  constructor(input?: { data?: any, type: BigNumber, version?: BigNumber, flags?: BigNumber }) {
+  constructor(input?: { data?: any, type: string, version?: BigNumber, flags?: BigNumber }) {
     this.version = input?.version || new BN(1, 10);
     this.data = input?.data ;
     this.flags = new BN(0, 10); // Default flags, can be set later
@@ -126,7 +114,7 @@ export class Claim implements SerializableEntity {
 
     byteLength += varint.encodingLength(this.version);
     byteLength += varint.encodingLength(this.flags); // flag for type presence
-    byteLength += varint.encodingLength(this.type);
+    byteLength += 20; // Assuming type is a 20-byte hash (e.g., hash160)
     
     // Serialize the data object to JSON string and get its byte length
     const dataJson = JSON.stringify(this.data);
@@ -141,7 +129,7 @@ export class Claim implements SerializableEntity {
 
     bufferWriter.writeVarInt(this.version);
     bufferWriter.writeVarInt(this.flags); // flag for type presence
-    bufferWriter.writeVarInt(this.type);
+    bufferWriter.writeSlice(fromBase58Check(this.type).hash); // Write type as a slice
 
     // Serialize the data object to JSON and write it
     const dataJson = JSON.stringify(this.data);
@@ -155,7 +143,7 @@ export class Claim implements SerializableEntity {
 
     this.version = reader.readVarInt();
     this.flags = reader.readVarInt(); // flag for type presence
-    this.type = reader.readVarInt();
+    this.type = toBase58Check(reader.readSlice(20), 102); // Read type as a 20-byte slice
 
     // Read the data object from JSON
     const dataJson = reader.readVarSlice().toString('utf-8');
@@ -194,7 +182,7 @@ export class Claim implements SerializableEntity {
     claimDescriptor.SetFlags();
 
     const mmrdata = [];
-    mmrdata.push({vdxfdata:{["i4GC1YGEVD21afWudGoFJVdnfjJ5XWnCQv"]: claimDescriptor.toJson()}})
+    mmrdata.push({vdxfdata:{[DataDescriptorKey.vdxfid]: claimDescriptor.toJson()}})
 
     if (recievingIdentity) {
       const tmpDataDescriptor = new DataDescriptor({
@@ -205,7 +193,7 @@ export class Claim implements SerializableEntity {
       });
       // Set flags for the data descriptor
       tmpDataDescriptor.SetFlags();
-      mmrdata.push({vdxfdata:{["i4GC1YGEVD21afWudGoFJVdnfjJ5XWnCQv"]: tmpDataDescriptor.toJson()}})
+      mmrdata.push({vdxfdata:{[DataDescriptorKey.vdxfid]: tmpDataDescriptor.toJson()}})
     }
 
     return mmrdata;

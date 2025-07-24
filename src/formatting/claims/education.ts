@@ -1,6 +1,6 @@
 import { BN } from 'bn.js';
 import { Identity } from 'verus-typescript-primitives';
-import { Claim, ATTESTATION_ID } from '../../classes/claim';
+import { Claim, CLAIM_EDUCATION } from '../../classes/claim';
 import { DataDescriptor } from 'verus-typescript-primitives';
 const { randomBytes } = require('crypto');
 
@@ -26,7 +26,7 @@ export class Education {
 
         // Create claim with education data in the body
         this.claim = new Claim({
-            type: Claim.TYPES.TYPE_EDUCATION,
+            type: CLAIM_EDUCATION.vdxfid,
             data
         });
     }
