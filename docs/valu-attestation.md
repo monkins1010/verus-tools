@@ -1,223 +1,533 @@
-# ValuAttestation Class Documentation
+# Attestation Methods Guide
 
-The `ValuAttestation` class is designed to convert SumSub KYC (Know Your Customer) JSON data into Verus DataDescriptors for use in blockchain attestations and identity verification.
+This guide explains two different approaches for sending `AttestationDetails` in the Valu API, showing how to process data from `signdata` and implement both inline and URL-based delivery methods.
 
 ## Overview
 
-This class provides a seamless way to transform third-party KYC data from SumSub into standardized Verus blockchain data structures, enabling identity attestations and verification on the Verus network.
+The Valu API supports two methods for delivering attestation data to users:
 
-## Installation
+1. **Inline Method** (`/get-attestation`) - Embeds attestation data directly in the QR code
+2. **URL-based Method** (`/get-multiple-attestations`) - Stores attestation data in database and provides download URL
 
-```bash
-npm install verus-tools
-```
+## Method 1: Inline Attestation Delivery
 
-## Basic Usage
+### How it works
+- Attestation data is embedded directly in the `LoginConsentRequest`
+- QR code contains all attestation information
+- Suitable for single, smaller attestations
 
-```typescript
-import { ValuAttestation } from 'verus-tools';
+### Implementation Example
 
-// Create ValuAttestation instance with SumSub data
-const attestation = new ValuAttestation(sumSubData);
+```javascript
+// Required imports
+const primitives = require('verus-typescript-primitives');
+// ... other imports
 
-// Generate MMR data for blockchain storage
-const identityFor = "identity1@";
-const title = "SumSub KYC Verification";
-const publicAddress = "RTqQe58LSj2yr5CrwYFwcsAQ1edQwmrkUU";
+module.exports = app.post("/get-attestation", async (req, res) => {
+  try {
+    const { partnerUserId } = req.body;
+    
+    // 1. Generate attestation data
+    // const attestationObject = await getPOL(partnerUserId);
+    // const generatedPOL = await generatePOLAttestation(
+    //   attestationObject, 
+    //   "Monkins.VRSCTEST@", 
+    //   "Valu Proof of Personhood"
+    // );
+    
+    // 2. Create signData package
+    const signDataPackage = {
+      address: "ValuAttestation@",
+      createmmr: true,
+      encryptoaddress: VALU_ZADDRESS,
+      mmrdata: [
+        {
+          "vdxfdata": {
+            [primitives.DataDescriptorKey.vdxfid]: {
+              "version": 1,
+              "flags": 0,
+              "label": "iEEjVkvM9Niz4u2WCr6QQzx1zpVSvDFub1",
+              "mimetype": "text/plain",
+              "objectdata": {
+                "message": "Valu Proof of Humanity"
+              }
+            }
+          }
+        },
+        {
+          "vdxfdata": {
+            [primitives.DataDescriptorKey.vdxfid]: {
+              "version": 1,
+              "flags": 0,
+              "label": "iFa41TpKfvbjaEnP78BNpSA9KYNgED58ms",
+              "mimetype": "text/plain",
+              "objectdata": {
+                "message": "usersID.VRSCTEST@"
+              }
+            }
+          }
+        },
+        {
+          "vdxfdata": {
+            [primitives.DataDescriptorKey.vdxfid]: {
+              "version": 1,
+              "flags": 0,
+              "label": "iPzSt64gwsqmxcz3Ht7zhMngLC6no6S74K",
+              "mimetype": "text/plain",
+              "objectdata": {
+                "message": "1980/01/01"
+              }
+            }
+          }
+        },
+        {
+          "vdxfdata": {
+            [primitives.DataDescriptorKey.vdxfid]: {
+              "version": 1,
+              "flags": 0,
+              "label": "i6E3RQUUX3jt8CkizuLX6ihZHTegCmmbj4",
+              "mimetype": "text/plain",
+              "objectdata": {
+                "message": "true"
+              }
+            }
+          }
+        }
+      ]
+    };
 
-const mmrData = attestation.generateMMRData(identityFor, title, publicAddress);
-console.log('MMR data generated:', mmrData.length, 'items');
-```
-
-## Complete Example: Creating Signed Attestation
-
-Here's a complete example showing how to use ValuAttestation in the signing process:
-
-```typescript
-
-
-import { ValuAttestation } from 'verus-tools';
-import { 
-    primitives, 
-    VerusId, 
-    VdxfUniValue, 
-    VDXF_Data 
-} from 'verus-typescript-primitives';
-import { VerusIdInterface } = from 'verusid-ts-client';
-const baseURL = `${process.env.REMOTE_PROTOCOL}://${process.env.REMOTE_HOST}:${process.env.REMOTE_PORT}`;
-
-const config = {
-  auth: {
-    username: process.env.REMOTE_USER,
-    password: process.env.REMOTE_PASS
-  }
-};
-
-const privateVerusRPC = new VerusdRpcInterface(process.env.VERUS_RPC_NETWORK, baseURL, config);
-async function createAndSignValuAttestation(sumSubData: any) {
-    try {
-        // 1. Create ValuAttestation instance
-        const attestation = new ValuAttestation(sumSubData);
-        
-        // 2. Generate MMR data with metadata for blockchain storage
-        const identityFor = "identity1@";
-        const attestor = "ValuAttestation@";
-        const title = "SumSub KYC Verification";
-        
-        const mmrData = attestation.generateMMRData(identityFor, title, attestor);
-        
-        // 3. Prepare sign data package
-        const VALU_ZADDRESS = "your_z_address_here";
-        const signDataPackage = {
-            address: attestor,
-            createmmr: true,
-            encryptoaddress: VALU_ZADDRESS,
-            mmrdata: mmrData
-        };
-
-        // 4. Sign the data
-        const attestationFromDaemon = await signdata([signDataPackage]);
-        
-        // 5. Create VDXF data object
-        const vdxfDataObj = {
-            [VDXF_Data.MMRDescriptorKey.vdxfid]: attestationFromDaemon.mmrdescriptor,
-            [VDXF_Data.SignatureDataKey.vdxfid]: attestationFromDaemon.signaturedata
-        };
-
-        // 6. Verify signature
-        const sigobject = primitives.SignatureData.fromJson(attestationFromDaemon.signaturedata);
-        const sigInfo = await VerusId.getSignatureInfo(
-            attestationFromDaemon.address, 
-            attestationFromDaemon.signaturedata.signature
-        );
-        
-        const signatureverified = await VerusId.verifyHash(
-            attestationFromDaemon.signaturedata.identityid,
-            attestationFromDaemon.signaturedata.signature,
-            sigobject.getIdentityHash({ 
-                version: sigInfo.version, 
-                hash_type: sigInfo.hashtype, 
-                height: sigInfo.height 
-            })
-        );
-
-        // 7. Validate MMR
-        const objectsBuffer = VdxfUniValue.fromJson(vdxfDataObj);
-        const validMMR = validateMMR(
-            objectsBuffer, 
-            Buffer.from(attestationFromDaemon.mmrdescriptor.mmrroot.objectdata, 'hex')
-        );
-
-        console.log('Signature verified:', signatureverified);
-        console.log('MMR valid:', validMMR);
-        console.log('Applicant ID:', attestation.getApplicantId());
-        console.log('Verification Status:', attestation.getVerificationStatus());
-        
-        return {
-            attestation,
-            attestationData: attestationFromDaemon,
-            signatureVerified: signatureverified,
-            mmrValid: validMMR,
-            mmrData
-        };
-        
-    } catch (error) {
-        console.error('Error creating and signing VALU attestation:', error);
-        throw error;
-    }
-}
-
-// Usage
-createAndSignValuAttestation(sumSubData)
-    .then(result => {
-        console.log('VALU attestation created and signed successfully:', result);
-    })
-    .catch(error => {
-        console.error('Failed to create VALU attestation:', error);
+    // 3. Get signed data from Verus daemon
+    const nodeResponse = (await privateVerusRPC.signData(signDataPackage)).result;
+    
+    // 4. Create AttestationDetails from node response
+    const attestationDetails = AttestationDetails.fromNodeResponse(nodeResponse, {
+      label: "Valu Proof of Personhood",
+      id: partnerUserId,
+      timestamp: Date.now()
     });
+
+    // 5. Convert AttestationDetails to buffer for inline embedding
+    const attestationBuffer = attestationDetails.toBuffer();
+    
+    // 6. Create LoginConsentRequest with inline attestation
+    const reply = await VerusId.createLoginConsentRequest(
+      VALU_ID,
+      new primitives.LoginConsentChallenge({
+        challenge_id: generateChallengeID(),
+        requested_access: [
+          new primitives.RequestedPermission(primitives.IDENTITY_VIEW.vdxfid)
+        ],
+        redirect_uris: [],
+        subject: [],
+        provisioning_info: [
+          new primitives.ProvisioningInfo(
+            "Valu Proof of Personhood",
+            primitives.ATTESTATION_PROVISION_TYPE.vdxfid
+          ),
+        ],
+        // KEY DIFFERENCE: Attestation data embedded inline
+        attestations: [
+          new primitives.Attestation(
+            attestationBuffer.toString('base64'),
+            primitives.ATTESTATION_PROVISION_OBJECT.vdxfid
+          )
+        ],
+        created_at: Number((Date.now() / 1000).toFixed(0)),
+      }),
+      VALU_LOGIN_WIF
+    );
+
+    res.status(200).send({ data: reply.toWalletDeeplinkUri() });
+    
+  } catch (e) {
+    console.log("Error:", e);
+    res.status(500).json({ error: e.message, success: false });
+  }
+});
 ```
 
-## SumSub Data Reference
+### Key Points for Inline Method:
+- `AttestationDetails.fromNodeResponse()` creates the details object from daemon response
+- `attestationDetails.toBuffer()` converts to binary format
+- Buffer is base64-encoded and placed in `attestations` array
+- QR code size increases with attestation data size
 
-The `sumSubData` object should follow this structure:
+### Understanding the mmrdata Structure:
+The `mmrdata` array contains structured attestation data with:
+- **label**: Unique identifier for each data element
+- **mimetype**: Format of the data (typically "text/plain")
+- **objectdata.message**: The actual attestation content
+- **primitives.DataDescriptorKey.vdxfid**: Standard VDXF key for data descriptors
 
-```typescript
-const sumSubData = {
-  id: "687e6a0f2966a7f001914c25",
-  createdAt: "2025-07-21 16:25:51",
-  key: "FWLTUDCVEHJBJQ",
-  clientId: "arkeytyp.com_100370",
-  inspectionId: "687e6a0f2966a7f001914c25",
-  externalUserId: "copy-e2ed3c09-5ed0-4bd0-ad17-546392faa5b0",
-  info: {
-    firstName: "John",
-    firstNameEn: "John",
-    lastName: "Mock-Doe",
-    lastNameEn: "Mock-Doe",
-    dob: "2006-01-22",
-    gender: "M",
-    country: "SRB",
-    nationality: "SRB",
-    idDocs: [
-      {
-        idDocType: "PASSPORT",
-        country: "SRB",
-        firstName: "John",
-        firstNameEn: "John",
-        lastName: "Mock-Doe",
-        lastNameEn: "Mock-Doe",
-        validUntil: "2026-07-12",
-        number: "Mock-W3XGD01WF2",
-        dob: "2006-01-22",
-        mrzLine1: "P<BLRLEANEN<<GEORGIA<<<<<<<<<<<<<<<<<<<<<<<<",
-        mrzLine2: "U2HZWN97A1BLR0704113F3309276<<<<<<<<<<<<<<08",
-      },
-    ],
-  },
-  fixedInfo: {
-    country: "GBR",
-    addresses: [
-      {
-        street: "123 church street",
-        streetEn: "123 church street",
-        state: "derbyshire",
-        stateEn: "derbyshire",
-        town: "derby",
-        townEn: "derby",
-        postCode: "de23 1AA",
-        country: "GBR",
-        formattedAddress: "123 church street, derby, derbyshire, United Kingdom, de23 1AA",
-      },
-    ],
-  },
-  email: "john123@yahoo.com",
-  applicantPlatform: "Web",
-  ipCountry: "GBR",
-  review: {
-    reviewId: "YuHVK",
-    attemptId: "eVBHU",
-    attemptCnt: 1,
-    elapsedSincePendingMs: 537,
-    elapsedSinceQueuedMs: 537,
-    reprocessing: true,
-    levelAutoCheckMode: null,
-    createDate: "2025-07-21 16:25:51+0000",
-    reviewDate: "2025-07-21 16:25:52+0000",
-    reviewResult: {
-      reviewAnswer: "GREEN",
+Example data elements:
+- "Valu Proof of Humanity" - Main attestation type
+- "monkins.VRSCTEST@" - Attestor identity
+- "1980/01/01" - Date of birth or verification date  
+- "true" - Boolean verification status
+
+## Method 2: URL-based Attestation Delivery
+
+### How it works
+- Attestation data is stored in database with unique ID
+- QR code contains only a download URL
+- Supports multiple attestations in bundles
+- Keeps QR code size minimal
+
+### Implementation Example
+
+```javascript
+// Required imports
+const primitives = require('verus-typescript-primitives');
+// ... other imports
+
+module.exports = app.post("/get-multiple-attestations", async (req, res) => {
+  try {
+    const { partnerUserId, attestationTypes = ["POL"] } = req.body;
+
+    // 1. Create master AttestationDetails container
+    const masterAttestationDetails = new AttestationDetails();
+    masterAttestationDetails.setLabel("ValuVerse Claims Bundle");
+    masterAttestationDetails.setTimestamp(new BN(Date.now()));
+    
+    // 2. Process each attestation type
+    for (const attestationType of attestationTypes) {
+      switch (attestationType) {
+        case "POL":
+          const POLStatus = await checkPOLStatus(partnerUserId);
+          if (POLStatus?.status === VALU_POL_PAYMENT_RECEIVED) {
+            
+            // Generate attestation data
+            const attestationObject = await getPOL(partnerUserId);
+            const generatedPOL = await generatePOLAttestation(
+              attestationObject, 
+              "Monkins.VRSCTEST@", 
+              "Valu Proof of Personhood"
+            );
+            
+            // Create signData package
+            const signDataPackage = {
+              address: "ValuAttestation@",
+              createmmr: true,
+              encryptoaddress: VALU_ZADDRESS,
+              mmrdata: [
+                {
+                  "vdxfdata": {
+                    [primitives.DataDescriptorKey.vdxfid]: {
+                      "version": 1,
+                      "flags": 0,
+                      "label": "iEEjVkvM9Niz4u2WCr6QQzx1zpVSvDFub1",
+                      "mimetype": "text/plain",
+                      "objectdata": {
+                        "message": "Valu Proof of Humanity"
+                      }
+                    }
+                  }
+                },
+                {
+                  "vdxfdata": {
+                    [primitives.DataDescriptorKey.vdxfid]: {
+                      "version": 1,
+                      "flags": 0,
+                      "label": "iFa41TpKfvbjaEnP78BNpSA9KYNgED58ms",
+                      "mimetype": "text/plain",
+                      "objectdata": {
+                        "message": "monkins.VRSCTEST@"
+                      }
+                    }
+                  }
+                },
+                {
+                  "vdxfdata": {
+                    [primitives.DataDescriptorKey.vdxfid]: {
+                      "version": 1,
+                      "flags": 0,
+                      "label": "iPzSt64gwsqmxcz3Ht7zhMngLC6no6S74K",
+                      "mimetype": "text/plain",
+                      "objectdata": {
+                        "message": "1980/01/01"
+                      }
+                    }
+                  }
+                },
+                {
+                  "vdxfdata": {
+                    [primitives.DataDescriptorKey.vdxfid]: {
+                      "version": 1,
+                      "flags": 0,
+                      "label": "i6E3RQUUX3jt8CkizuLX6ihZHTegCmmbj4",
+                      "mimetype": "text/plain",
+                      "objectdata": {
+                        "message": "true"
+                      }
+                    }
+                  }
+                }
+              ]
+            };
+
+            // Get signed data from daemon
+            const nodeResponse = (await privateVerusRPC.signData(signDataPackage)).result;
+            
+            // Add this attestation to the master collection
+            masterAttestationDetails.addAttestation(nodeResponse);
+          }
+          break;
+        
+        case "KYC":
+          // Additional attestation types can be added here
+          break;
+      }
+    }
+
+    // 3. Store AttestationDetails in database
+    const uniqueAttestationId = generateChallengeID();
+    await storeAttestationData(
+      uniqueAttestationId, 
+      masterAttestationDetails, 
+      partnerUserId
+    );
+
+    // 4. Create LoginConsentRequest with URL reference
+    const reply = await VerusId.createLoginConsentRequest(
+      VALU_ID,
+      new primitives.LoginConsentChallenge({
+        challenge_id: generateChallengeID(),
+        requested_access: [
+          new primitives.RequestedPermission(primitives.IDENTITY_VIEW.vdxfid)
+        ],
+        // KEY DIFFERENCE: URL for attestation download
+        redirect_uris: [
+          new primitives.RedirectUri(
+            `${process.env.THIS_URL}/attestations/dl/${uniqueAttestationId}`,
+            primitives.ATTESTATION_PROVISION_URL.vdxfid
+          ),
+        ],
+        subject: [],
+        provisioning_info: [
+          new primitives.ProvisioningInfo(
+            masterAttestationDetails.label || "ValuVerse Claims Bundle",
+            primitives.ATTESTATION_PROVISION_TYPE.vdxfid
+          ),
+        ],
+        // KEY DIFFERENCE: Empty attestations array
+        attestations: [],
+        created_at: Number((Date.now() / 1000).toFixed(0)),
+      }),
+      VALU_LOGIN_WIF
+    );
+
+    res.status(200).send({ 
+      data: reply.toWalletDeeplinkUri(),
+      attestationCount: masterAttestationDetails.getAttestationCount(),
+      attestationUrl: `${process.env.THIS_URL}/attestations/dl/${uniqueAttestationId}`
+    });
+
+  } catch (e) {
+    console.log("Error:", e);
+    res.status(500).json({ error: e.message, success: false });
+  }
+});
+```
+
+### Download Endpoint for URL Method
+
+```javascript
+module.exports = app.post("/attestations/dl/:uniqueId", async (req, res) => {
+  try {
+    const { uniqueId } = req.params;
+    
+    // Retrieve stored AttestationDetails from database
+    const attestationDetailsJson = await getAttestationData(uniqueId);
+    
+    if (!attestationDetailsJson) {
+      return res.status(404).json({ 
+        error: "Attestation not found or expired", 
+        success: false 
+      });
+    }
+
+    // Return the AttestationDetails as JSON
+    res.status(200).json({
+      success: true,
+      ...attestationDetailsJson
+    });
+    
+    // Mark as downloaded for analytics
+    await markAttestationDownloaded(uniqueId);
+    
+  } catch (e) {
+    console.log("Error downloading attestation:", e);
+    res.status(500).json({ 
+      error: "Failed to download attestation data", 
+      success: false 
+    });
+  }
+});
+```
+
+## Working with signData Response
+
+### Understanding the signData Response Structure
+
+When you call `privateVerusRPC.signData(signDataPackage)`, you get a response like:
+
+```javascript
+{
+  result: {
+    address: "ValuAttestation@",
+    signaturedata: {
+      identityid: "...",
+      signature: "...",
+      // ... other signature fields
     },
-    reviewStatus: "completed",
-    priority: 0,
-  },
-  lang: "en",
-  type: "individual",
-  notes: [],
-  tags: ["Basic KYC Passed"],
-  copyOf: null,
-  reuseScope: "importApiShareToken",
-};
+    mmrdescriptor: {
+      mmrroot: {
+        objectdata: "..." // hex string
+      },
+      mmrHashes: {
+        objectdata: "..." // serialized hash data
+      },
+      dataDescriptors: [
+        {
+          objectdata: "...", // VDXF encoded data
+          salt: "..." // hex string
+        }
+      ]
+    }
+  }
+}
 ```
 
-## License
+### Converting signData to AttestationDetails
 
-This project is licensed under the MIT License.
+#### Method 1: Using fromNodeResponse (Recommended)
+
+```javascript
+// Create AttestationDetails from the complete node response
+const attestationDetails = AttestationDetails.fromNodeResponse(nodeResponse, {
+  label: "Custom Attestation Label",
+  id: partnerUserId,
+  timestamp: Date.now()
+});
+```
+
+#### Method 2: Manual Construction
+
+```javascript
+// If you need more control over the process
+const attestationDetails = new AttestationDetails();
+attestationDetails.setLabel("Custom Label");
+attestationDetails.setTimestamp(new BN(Date.now()));
+
+// Add the attestation data from signData response
+attestationDetails.addAttestation(nodeResponse);
+```
+
+### Converting AttestationDetails to Buffer
+
+```javascript
+// For inline embedding in LoginConsentRequest
+const attestationBuffer = attestationDetails.toBuffer();
+const base64Attestation = attestationBuffer.toString('base64');
+
+// Use in attestations array
+const attestation = new primitives.Attestation(
+  base64Attestation,
+  primitives.ATTESTATION_PROVISION_OBJECT.vdxfid
+);
+```
+
+### Storing AttestationDetails for URL Method
+
+```javascript
+// Convert to JSON for database storage
+const attestationJson = attestationDetails.toJson();
+
+// Store with unique identifier
+await storeAttestationData(uniqueId, attestationDetails, partnerUserId);
+
+// Later retrieve and reconstruct
+const storedJson = await getAttestationData(uniqueId);
+const reconstructedDetails = AttestationDetails.fromJson(storedJson);
+```
+
+## Database Schema for URL Method
+
+The URL method requires storing attestation data. Here's the recommended schema:
+
+```sql
+CREATE TABLE attestation_storage (
+  id VARCHAR(64) PRIMARY KEY,
+  partner_user_id VARCHAR(255),
+  attestation_data TEXT, -- JSON string of AttestationDetails.toJson()
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  downloaded_at TIMESTAMP NULL,
+  expires_at TIMESTAMP,
+  attestation_count INTEGER DEFAULT 1
+);
+```
+
+## Comparison Summary
+
+| Feature | Inline Method | URL Method |
+|---------|---------------|------------|
+| **QR Code Size** | Large (grows with data) | Small (fixed size) |
+| **Multiple Attestations** | Limited by QR capacity | Unlimited |
+| **Network Dependency** | No (all data in QR) | Yes (requires download) |
+| **Storage Requirements** | None | Database storage needed |
+| **Use Cases** | Single, small attestations | Multiple or large attestations |
+| **Complexity** | Simple | More complex |
+
+## Best Practices
+
+1. **Choose Method Based on Use Case**:
+   - Use inline for single, lightweight attestations
+   - Use URL method for multiple or large attestations
+
+2. **Security Considerations**:
+   - URL method should implement proper access controls
+   - Consider attestation expiration times
+   - Validate attestation integrity on both methods
+
+3. **Error Handling**:
+   - Always validate `signData` responses
+   - Implement proper error responses for missing attestations
+   - Handle network failures gracefully in URL method
+
+4. **Performance**:
+   - Cache frequently requested attestations
+   - Implement proper database indexing
+   - Consider compression for large attestation bundles
+
+5. **User Experience**:
+   - Provide clear feedback on attestation status
+   - Handle offline scenarios appropriately
+   - Implement retry mechanisms for failed downloads
+
+## Example Integration
+
+Here's how a client application might handle both methods:
+
+```javascript
+// Client-side handling
+async function processAttestationQR(qrData) {
+  const loginRequest = primitives.LoginConsentRequest.fromWalletDeeplinkUri(qrData);
+  
+  if (loginRequest.challenge.attestations.length > 0) {
+    // Inline method - process embedded attestations
+    for (const attestation of loginRequest.challenge.attestations) {
+      const attestationBuffer = Buffer.from(attestation.data, 'base64');
+      const attestationDetails = AttestationDetails.fromBuffer(attestationBuffer);
+      // Process attestation...
+    }
+  } else if (loginRequest.challenge.redirect_uris.length > 0) {
+    // URL method - download attestations
+    const downloadUrl = loginRequest.challenge.redirect_uris[0].uri;
+    const response = await fetch(downloadUrl, { method: 'POST' });
+    const attestationData = await response.json();
+    // Process downloaded attestation data...
+  }
+}
+```
+
+This guide provides a complete reference for implementing both attestation delivery methods in the Valu API system.
