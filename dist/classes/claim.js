@@ -1,13 +1,14 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Claim = exports.ATTESTATION_ID = exports.CLAIM = exports.CLAIM_EXPERIENCE = exports.CLAIM_SKILL = exports.CLAIM_EDUCATION = exports.CLAIM_CERTIFICATION = exports.CLAIM_ACHIEVEMENT = exports.CLAIM_EMPLOYMENT = void 0;
+exports.Claim = exports.CLAIM = exports.CLAIM_EXPERIENCE = exports.CLAIM_SKILL = exports.CLAIM_EDUCATION = exports.CLAIM_CERTIFICATION = exports.CLAIM_ACHIEVEMENT = exports.CLAIM_EMPLOYMENT = void 0;
 const varuint_1 = require("verus-typescript-primitives/dist/utils/varuint");
 const varint_1 = require("verus-typescript-primitives/dist/utils/varint");
+const address_1 = require("verus-typescript-primitives/dist/utils/address");
 const bufferutils_1 = require("verus-typescript-primitives/dist/utils/bufferutils");
 const bn_js_1 = require("bn.js");
 const verus_typescript_primitives_1 = require("verus-typescript-primitives");
 const { BufferReader, BufferWriter } = bufferutils_1.default;
-const { randomBytes } = require('crypto');
+// Keys for Valuverse Claims, users can create their own claim types.
 exports.CLAIM_EMPLOYMENT = {
     "vdxfid": "i3bgiLuaxTr6smF8q6xLG4jvvhF1mmrkM2",
     "indexid": "x8RoB9Lfon4mVw8AgncVETGTxMG2jfebR7",
@@ -71,9 +72,6 @@ exports.CLAIM = {
         "name": "valu.vrsc::claim"
     }
 };
-exports.ATTESTATION_ID = {
-    "vdxfid": "iAttestationId123456789", // placeholder - replace with actual VDXF key
-};
 class Claim {
     constructor(input) {
         this.version = (input === null || input === void 0 ? void 0 : input.version) || new bn_js_1.BN(1, 10);
@@ -88,7 +86,7 @@ class Claim {
         let byteLength = 0;
         byteLength += varint_1.default.encodingLength(this.version);
         byteLength += varint_1.default.encodingLength(this.flags); // flag for type presence
-        byteLength += varint_1.default.encodingLength(this.type);
+        byteLength += 20; // Assuming type is a 20-byte hash (e.g., hash160)
         // Serialize the data object to JSON string and get its byte length
         const dataJson = JSON.stringify(this.data);
         byteLength += varuint_1.default.encodingLength(Buffer.from(dataJson, 'utf-8').byteLength);
@@ -99,7 +97,7 @@ class Claim {
         const bufferWriter = new BufferWriter(Buffer.alloc(this.getByteLength()));
         bufferWriter.writeVarInt(this.version);
         bufferWriter.writeVarInt(this.flags); // flag for type presence
-        bufferWriter.writeVarInt(this.type);
+        bufferWriter.writeSlice((0, address_1.fromBase58Check)(this.type).hash); // Write type as a slice
         // Serialize the data object to JSON and write it
         const dataJson = JSON.stringify(this.data);
         bufferWriter.writeVarSlice(Buffer.from(dataJson, 'utf-8'));
@@ -109,7 +107,7 @@ class Claim {
         const reader = new BufferReader(buffer, offset);
         this.version = reader.readVarInt();
         this.flags = reader.readVarInt(); // flag for type presence
-        this.type = reader.readVarInt();
+        this.type = (0, address_1.toBase58Check)(reader.readSlice(20), 102); // Read type as a 20-byte slice
         // Read the data object from JSON
         const dataJson = reader.readVarSlice().toString('utf-8');
         this.data = JSON.parse(dataJson);
@@ -132,15 +130,18 @@ class Claim {
         };
     }
     toMMRData(recievingIdentity) {
+        if (!this.type) {
+            throw new Error('Claim type is required');
+        }
         // Create a single data descriptor with the claim type as label and serialized claim as data
         const claimDescriptor = new verus_typescript_primitives_1.DataDescriptor({
             version: new bn_js_1.BN(1),
-            label: exports.CLAIM.vdxfid,
+            label: this.type,
             objectdata: this.toBuffer()
         });
         claimDescriptor.SetFlags();
         const mmrdata = [];
-        mmrdata.push({ vdxfdata: { ["i4GC1YGEVD21afWudGoFJVdnfjJ5XWnCQv"]: claimDescriptor.toJson() } });
+        mmrdata.push({ vdxfdata: { [verus_typescript_primitives_1.DataDescriptorKey.vdxfid]: claimDescriptor.toJson() } });
         if (recievingIdentity) {
             const tmpDataDescriptor = new verus_typescript_primitives_1.DataDescriptor({
                 version: new bn_js_1.BN(1),
@@ -150,7 +151,7 @@ class Claim {
             });
             // Set flags for the data descriptor
             tmpDataDescriptor.SetFlags();
-            mmrdata.push({ vdxfdata: { ["i4GC1YGEVD21afWudGoFJVdnfjJ5XWnCQv"]: tmpDataDescriptor.toJson() } });
+            mmrdata.push({ vdxfdata: { [verus_typescript_primitives_1.DataDescriptorKey.vdxfid]: tmpDataDescriptor.toJson() } });
         }
         return mmrdata;
     }
@@ -178,11 +179,3 @@ Claim.VERSION_INVALID = new bn_js_1.BN(0, 10);
 Claim.VERSION_FIRST = new bn_js_1.BN(1, 10);
 Claim.VERSION_LAST = new bn_js_1.BN(1, 10);
 Claim.VERSION_CURRENT = new bn_js_1.BN(1, 10);
-Claim.TYPES = {
-    TYPE_EXPERIENCE: new bn_js_1.BN(0, 10),
-    TYPE_ACHIEVEMENT: new bn_js_1.BN(1, 10),
-    TYPE_CERTIFICATION: new bn_js_1.BN(2, 10),
-    TYPE_EDUCATION: new bn_js_1.BN(3, 10),
-    TYPE_EMPLOYMENT: new bn_js_1.BN(4, 10),
-    TYPE_SKILL: new bn_js_1.BN(5, 10)
-};

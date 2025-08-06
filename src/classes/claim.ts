@@ -172,10 +172,14 @@ export class Claim implements SerializableEntity {
   }
 
   toMMRData(recievingIdentity: String) {
+
+    if (!this.type) {
+      throw new Error('Claim type is required');
+    }
     // Create a single data descriptor with the claim type as label and serialized claim as data
     const claimDescriptor = new DataDescriptor({
       version: new BN(1),
-      label: CLAIM.vdxfid,
+      label: this.type, 
       objectdata: this.toBuffer()
     });
 

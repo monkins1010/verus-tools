@@ -9,7 +9,7 @@ class Education {
         this.identity = identity;
         // Create claim with education data in the body
         this.claim = new claim_1.Claim({
-            type: claim_1.Claim.TYPES.TYPE_EDUCATION,
+            type: claim_1.CLAIM_EDUCATION.vdxfid,
             data
         });
     }

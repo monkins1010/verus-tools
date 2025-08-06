@@ -66,10 +66,6 @@ export declare const CLAIM: {
         name: string;
     };
 };
-export declare const ATTESTATION_ID: {
-    vdxfid: string;
-};
-export declare type ClaimType = 'experience' | 'achievement' | 'certification' | 'education' | 'employment' | 'skill';
 export declare class Claim implements SerializableEntity {
     static VERSION_INVALID: import("bn.js");
     static VERSION_FIRST: import("bn.js");
@@ -77,19 +73,11 @@ export declare class Claim implements SerializableEntity {
     static VERSION_CURRENT: import("bn.js");
     version: BigNumber;
     flags: BigNumber;
-    type: BigNumber;
+    type: string;
     data: any;
-    static readonly TYPES: {
-        readonly TYPE_EXPERIENCE: import("bn.js");
-        readonly TYPE_ACHIEVEMENT: import("bn.js");
-        readonly TYPE_CERTIFICATION: import("bn.js");
-        readonly TYPE_EDUCATION: import("bn.js");
-        readonly TYPE_EMPLOYMENT: import("bn.js");
-        readonly TYPE_SKILL: import("bn.js");
-    };
     constructor(input?: {
         data?: any;
-        type: BigNumber;
+        type: string;
         version?: BigNumber;
         flags?: BigNumber;
     });
