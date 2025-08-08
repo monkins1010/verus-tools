@@ -59,9 +59,9 @@ import {
 
 // Create a request for a full KYC attestation
 const educationRequest = new RequestItem({
-    version: 1,
-    format: RequestedFormatFlags.FULL_DATA,
-    type: InformationType.ATTESTATION,
+
+    format: new BN(RequestedFormatFlags.FULL_DATA),
+    type: new BN(InformationType.ATTESTATION),
     id: { [ATTESTATION_NAME.vdxfid]: "Valu Proof of Humanity" },
     signer: "iKjrTCwoPFRk44fAi2nYNbPG16ZUQjv1NB",
 
@@ -69,7 +69,7 @@ const educationRequest = new RequestItem({
 
 // Create the request information container
 const requestInfo = new RequestInformation({
-    version: 1,
+
     items: [educationRequest]
 });
 ```
@@ -79,18 +79,18 @@ const requestInfo = new RequestInformation({
 ```typescript
 // Request multiple different attestations
 const employmentRequest = new RequestItem({
-    version: 1,
-    format: RequestedFormatFlags.FULL_DATA,
-    type: InformationType.CLAIM,
+
+    format: new BN(RequestedFormatFlags.FULL_DATA),
+    type: new BN(InformationType.CLAIM),
     id: { "i3bgiLuaxTr6smF8q6xLG4jvvhF1mmrkM2": "Employment at acme widgets" }, // valu.vrsc::claims.employment
     signer: "iKjrTCwoPFRk44fAi2nYNbPG16ZUQjv1NB",
 });
 
 //request partial data 
 const certificationRequest = new RequestItem({
-    version: 1,
-    format: RequestedFormatFlags.PARTIAL_DATA,
-    type: InformationType.CREDENTIAL,
+
+    format: new BN(RequestedFormatFlags.PARTIAL_DATA),
+    type: new BN(InformationType.CREDENTIAL),
     id: { [ATTESTATION_NAME.vdxfid]: "Valu Proof of Humanity"}, // "vrsc::attestation.name" : name
     signer: "iKjrTCwoPFRk44fAi2nYNbPG16ZUQjv1NB", //valu attestations@
     requestedkeys: ["iAXYYrZaipc4DAmAKXUFYZxavsf6uBJqaj","iJ4pq4DCymfbu8SAuXyNhasLeSHFNKPr23", IDENTITY_NATIONALITY.vdxfid]  //"vrsc::identity.over21" , "vrsc::identity.email"
@@ -98,9 +98,9 @@ const certificationRequest = new RequestItem({
 
 //request collection of all valu.vrsc::claims.education
 const collectionRequest = new RequestItem({
-    version: 1,
-    format: RequestedFormatFlags.COLLECTION,
-    type: InformationType.CREDENTIAL,
+
+    format: new BN(RequestedFormatFlags.COLLECTION),
+    type: new BN(InformationType.CREDENTIAL),
     id: { "i3bgiLuaxTr6smF8q6xLG4jvvhF1mmrkM2": "" }, // valu.vrsc::claims.employment
     signer: "iKjrTCwoPFRk44fAi2nYNbPG16ZUQjv1NB", //valu attestations@
 
@@ -108,7 +108,7 @@ const collectionRequest = new RequestItem({
 
 
 const multipleRequestsInfo = new RequestInformation({
-    version: 1,
+
     items: [educationRequest, employmentRequest, certificationRequest, collectionRequest]
 });
 ```
