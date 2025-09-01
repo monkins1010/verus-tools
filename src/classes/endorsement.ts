@@ -1,15 +1,11 @@
-import { Identity } from 'verus-typescript-primitives';
-
 import varuint from 'verus-typescript-primitives/dist/utils/varuint'
 import varint from 'verus-typescript-primitives/dist/utils/varint'
-import { fromBase58Check, toBase58Check } from "verus-typescript-primitives/dist/utils/address";
 import bufferutils from 'verus-typescript-primitives/dist/utils/bufferutils'
 import { BN } from 'bn.js';
 import { BigNumber } from 'verus-typescript-primitives/dist/utils/types/BigNumber';
-import { I_ADDR_VERSION } from 'verus-typescript-primitives/dist/constants/vdxf';
 import { SerializableEntity } from 'verus-typescript-primitives/dist/utils/types/SerializableEntity';
 import { VdxfUniValue, SignatureData, SignatureJsonDataInterface, VDXFKeyInterface } from 'verus-typescript-primitives'
-import { VerusIdInterface, primitives } from 'verusid-ts-client';
+import { VerusIdInterface } from 'verusid-ts-client';
 import { createHash } from 'crypto';
 
 const verusd = new VerusIdInterface('VRSC', 'https://api.verustest.net');
@@ -118,18 +114,18 @@ export class Endorsement implements SerializableEntity {
 
   }
 
-  getByteLength() {
+   getByteLength() {
     let byteLength = 0;
 
     byteLength += varint.encodingLength(this.version);
     byteLength += varint.encodingLength(this.flags);
-    byteLength += varuint.encodingLength(Buffer.from(this.endorsee, 'utf-8').length);
-    byteLength += Buffer.from(this.endorsee, 'utf-8').length;
+    byteLength += varuint.encodingLength(Buffer.from(this.endorsee, 'utf-8').byteLength);
+    byteLength += Buffer.from(this.endorsee, 'utf-8').byteLength;
     byteLength += varuint.encodingLength(this.reference.length);
     byteLength += this.reference.length;
 
     if (this.message && this.message.length > 0) {
-      byteLength += varuint.encodingLength(Buffer.from(this.message, 'utf-8').length);
+      byteLength += varuint.encodingLength(Buffer.from(this.message, 'utf-8').byteLength);
       byteLength += Buffer.from(this.message, 'utf-8').length;
     }
 
@@ -191,11 +187,11 @@ export class Endorsement implements SerializableEntity {
     }
 
     if (this.signature && Endorsement.FLAGS_HAS_SIGNATURE.and(this.flags).gt(new BN(0))) {
-      bufferWriter.writeVarSlice(this.signature.toBuffer());
+      bufferWriter.writeSlice(this.signature.toBuffer());
     }
 
     if (this.txid && Endorsement.FLAGS_HAS_TXID.and(this.flags).gt(new BN(0))) {
-      bufferWriter.writeSlice(this.txid);
+      bufferWriter.writeVarSlice(this.txid);
     }
 
     return bufferWriter.buffer
@@ -215,16 +211,16 @@ export class Endorsement implements SerializableEntity {
 
     if (Endorsement.FLAGS_HAS_METADATA.and(this.flags).gt(new BN(0))) {
       this.metaData = new VdxfUniValue();
-      this.metaData.fromBuffer(reader.readVarSlice());
+      reader.offset = this.metaData.fromBuffer(reader.buffer, reader.offset);
     }
 
     if (Endorsement.FLAGS_HAS_SIGNATURE.and(this.flags).gt(new BN(0))) {
       this.signature = new SignatureData();
-      this.signature.fromBuffer(reader.readVarSlice());
+      reader.offset = this.signature.fromBuffer(reader.buffer, reader.offset);
     }
 
     if (Endorsement.FLAGS_HAS_TXID.and(this.flags).gt(new BN(0))) {
-      this.txid = reader.readSlice(32);
+      this.txid = reader.readVarSlice();
     }
 
     return reader.offset;
@@ -264,7 +260,7 @@ export class Endorsement implements SerializableEntity {
     }
     const data = this.toBuffer();
 
-    return createHash('sha256').update(data).digest();
+    return createHash('sha256').update(new Uint8Array(data)).digest();
 
   }
 

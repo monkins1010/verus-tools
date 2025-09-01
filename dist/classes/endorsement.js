@@ -71,12 +71,12 @@ class Endorsement {
         let byteLength = 0;
         byteLength += varint_1.default.encodingLength(this.version);
         byteLength += varint_1.default.encodingLength(this.flags);
-        byteLength += varuint_1.default.encodingLength(Buffer.from(this.endorsee, 'utf-8').length);
-        byteLength += Buffer.from(this.endorsee, 'utf-8').length;
+        byteLength += varuint_1.default.encodingLength(Buffer.from(this.endorsee, 'utf-8').byteLength);
+        byteLength += Buffer.from(this.endorsee, 'utf-8').byteLength;
         byteLength += varuint_1.default.encodingLength(this.reference.length);
         byteLength += this.reference.length;
         if (this.message && this.message.length > 0) {
-            byteLength += varuint_1.default.encodingLength(Buffer.from(this.message, 'utf-8').length);
+            byteLength += varuint_1.default.encodingLength(Buffer.from(this.message, 'utf-8').byteLength);
             byteLength += Buffer.from(this.message, 'utf-8').length;
         }
         if (this.metaData && Endorsement.FLAGS_HAS_METADATA.and(this.flags).gt(new bn_js_1.BN(0))) {
@@ -121,10 +121,10 @@ class Endorsement {
             bufferWriter.writeSlice(this.metaData.toBuffer());
         }
         if (this.signature && Endorsement.FLAGS_HAS_SIGNATURE.and(this.flags).gt(new bn_js_1.BN(0))) {
-            bufferWriter.writeVarSlice(this.signature.toBuffer());
+            bufferWriter.writeSlice(this.signature.toBuffer());
         }
         if (this.txid && Endorsement.FLAGS_HAS_TXID.and(this.flags).gt(new bn_js_1.BN(0))) {
-            bufferWriter.writeSlice(this.txid);
+            bufferWriter.writeVarSlice(this.txid);
         }
         return bufferWriter.buffer;
     }
@@ -139,14 +139,14 @@ class Endorsement {
         }
         if (Endorsement.FLAGS_HAS_METADATA.and(this.flags).gt(new bn_js_1.BN(0))) {
             this.metaData = new verus_typescript_primitives_1.VdxfUniValue();
-            this.metaData.fromBuffer(reader.readVarSlice());
+            reader.offset = this.metaData.fromBuffer(reader.buffer, reader.offset);
         }
         if (Endorsement.FLAGS_HAS_SIGNATURE.and(this.flags).gt(new bn_js_1.BN(0))) {
             this.signature = new verus_typescript_primitives_1.SignatureData();
-            this.signature.fromBuffer(reader.readVarSlice());
+            reader.offset = this.signature.fromBuffer(reader.buffer, reader.offset);
         }
         if (Endorsement.FLAGS_HAS_TXID.and(this.flags).gt(new bn_js_1.BN(0))) {
-            this.txid = reader.readSlice(32);
+            this.txid = reader.readVarSlice();
         }
         return reader.offset;
     }
@@ -174,7 +174,7 @@ class Endorsement {
             throw new Error('Signature should be removed before creating a new one');
         }
         const data = this.toBuffer();
-        return (0, crypto_1.createHash)('sha256').update(data).digest();
+        return (0, crypto_1.createHash)('sha256').update(new Uint8Array(data)).digest();
     }
     toJson() {
         let retVal = {
