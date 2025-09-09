@@ -171,7 +171,7 @@ export class Claim implements SerializableEntity {
     }
   }
 
-  toMMRData(recievingIdentity: String) {
+  toMMRData(recievingIdentity: String, addClaimKey: boolean = true): Array<any> {
 
     if (!this.type) {
       throw new Error('Claim type is required');
@@ -198,6 +198,17 @@ export class Claim implements SerializableEntity {
       // Set flags for the data descriptor
       tmpDataDescriptor.SetFlags();
       mmrdata.push({vdxfdata:{[DataDescriptorKey.vdxfid]: tmpDataDescriptor.toJson()}})
+    }
+
+    if (addClaimKey) {
+      const claimKeyDescriptor = new DataDescriptor({
+        version: new BN(1),
+        label: 'i4d7U1aZhmoxZbWx8AVezh6z1YewAnuw3V', //CLAIM.vdxfid 
+        objectdata: Buffer.from('')
+      });
+      // Set flags for the data descriptor
+      claimKeyDescriptor.SetFlags();
+      mmrdata.push({vdxfdata:{[DataDescriptorKey.vdxfid]: claimKeyDescriptor.toJson()}})
     }
 
     return mmrdata;

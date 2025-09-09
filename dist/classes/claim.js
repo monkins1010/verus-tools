@@ -129,7 +129,7 @@ class Claim {
             contentmultimap
         };
     }
-    toMMRData(recievingIdentity) {
+    toMMRData(recievingIdentity, addClaimKey = true) {
         if (!this.type) {
             throw new Error('Claim type is required');
         }
@@ -152,6 +152,16 @@ class Claim {
             // Set flags for the data descriptor
             tmpDataDescriptor.SetFlags();
             mmrdata.push({ vdxfdata: { [verus_typescript_primitives_1.DataDescriptorKey.vdxfid]: tmpDataDescriptor.toJson() } });
+        }
+        if (addClaimKey) {
+            const claimKeyDescriptor = new verus_typescript_primitives_1.DataDescriptor({
+                version: new bn_js_1.BN(1),
+                label: 'i4d7U1aZhmoxZbWx8AVezh6z1YewAnuw3V',
+                objectdata: Buffer.from('')
+            });
+            // Set flags for the data descriptor
+            claimKeyDescriptor.SetFlags();
+            mmrdata.push({ vdxfdata: { [verus_typescript_primitives_1.DataDescriptorKey.vdxfid]: claimKeyDescriptor.toJson() } });
         }
         return mmrdata;
     }

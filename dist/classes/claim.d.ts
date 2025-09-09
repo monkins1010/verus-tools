@@ -90,6 +90,6 @@ export declare class Claim implements SerializableEntity {
             [key: string]: [string];
         };
     };
-    toMMRData(recievingIdentity: String): any[];
+    toMMRData(recievingIdentity: String, addClaimKey?: boolean): Array<any>;
     static storeMultipleClaimsInID(claims: Claim[]): ContentMultiMap;
 }
